@@ -15,8 +15,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"lexiassist/shared/pkg/logger"
-	"lexiassist/shared/pkg/redis"
+	"zuri/shared/pkg/logger"
+	"zuri/shared/pkg/redis"
 )
 
 // AIDedupMiddleware returns middleware that deduplicates AI requests.

@@ -17,12 +17,12 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"lexiassist/services/user/internal/client"
-	"lexiassist/services/user/internal/model"
-	"lexiassist/services/user/internal/repository"
-	"lexiassist/shared/pkg/auth"
-	"lexiassist/shared/pkg/config"
-	"lexiassist/shared/pkg/logger"
+	"zuri/services/user/internal/client"
+	"zuri/services/user/internal/model"
+	"zuri/services/user/internal/repository"
+	"zuri/shared/pkg/auth"
+	"zuri/shared/pkg/config"
+	"zuri/shared/pkg/logger"
 )
 
 var (

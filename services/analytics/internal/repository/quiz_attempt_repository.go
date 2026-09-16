@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"lexiassist/services/analytics/internal/model"
-	"lexiassist/shared/pkg/database"
+	"zuri/services/analytics/internal/model"
+	"zuri/shared/pkg/database"
 )
 
 // QuizAttemptRepository defines the interface for quiz attempt data access.

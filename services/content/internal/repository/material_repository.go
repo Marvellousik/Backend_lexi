@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"lexiassist/services/content/internal/model"
-	"lexiassist/shared/pkg/database"
+	"zuri/services/content/internal/model"
+	"zuri/shared/pkg/database"
 )
 
 // MaterialRepository defines the interface for material data access.

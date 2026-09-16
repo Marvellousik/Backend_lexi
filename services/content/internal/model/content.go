@@ -32,7 +32,7 @@ type Course struct {
 
 // TableName specifies the table name for Course.
 func (Course) TableName() string {
-	return "lexi_content.courses"
+	return "zuri_content.courses"
 }
 
 // ProcessingStatus represents the material processing status.
@@ -69,7 +69,7 @@ type Material struct {
 
 // TableName specifies the table name for Material.
 func (Material) TableName() string {
-	return "lexi_content.materials"
+	return "zuri_content.materials"
 }
 
 // DifficultyLevel represents quiz/question difficulty.
@@ -104,7 +104,7 @@ type Quiz struct {
 
 // TableName specifies the table name for Quiz.
 func (Quiz) TableName() string {
-	return "lexi_content.quizzes"
+	return "zuri_content.quizzes"
 }
 
 // QuestionType represents the type of quiz question.
@@ -169,7 +169,7 @@ type QuizQuestion struct {
 
 // TableName specifies the table name for QuizQuestion.
 func (QuizQuestion) TableName() string {
-	return "lexi_content.quiz_questions"
+	return "zuri_content.quiz_questions"
 }
 
 // FlashcardDeck represents a deck of flashcards.
@@ -192,7 +192,7 @@ type FlashcardDeck struct {
 
 // TableName specifies the table name for FlashcardDeck.
 func (FlashcardDeck) TableName() string {
-	return "lexi_content.flashcard_decks"
+	return "zuri_content.flashcard_decks"
 }
 
 // Flashcard represents a single flashcard.
@@ -212,5 +212,5 @@ type Flashcard struct {
 
 // TableName specifies the table name for Flashcard.
 func (Flashcard) TableName() string {
-	return "lexi_content.flashcards"
+	return "zuri_content.flashcards"
 }

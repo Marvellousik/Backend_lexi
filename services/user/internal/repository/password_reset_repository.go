@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"lexiassist/services/user/internal/model"
+	"zuri/services/user/internal/model"
 )
 
 // PasswordResetRepository defines the interface for password reset data access.

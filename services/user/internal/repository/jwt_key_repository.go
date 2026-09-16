@@ -7,7 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"lexiassist/services/user/internal/model"
+	"zuri/services/user/internal/model"
 )
 
 // JWTKeyRepository defines the interface for JWT key data access.

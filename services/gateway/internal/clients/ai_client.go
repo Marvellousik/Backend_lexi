@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"lexiassist/services/gateway/internal/config"
-	"lexiassist/shared/pkg/logger"
+	"zuri/services/gateway/internal/config"
+	"zuri/shared/pkg/logger"
 )
 
 // Log is the package-level logger

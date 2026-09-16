@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"lexiassist/services/analytics/internal/model"
-	"lexiassist/shared/pkg/database"
+	"zuri/services/analytics/internal/model"
+	"zuri/shared/pkg/database"
 )
 
 // AIInteractionRepository defines the interface for AI interaction data access.

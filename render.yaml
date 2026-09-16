@@ -1,4 +1,4 @@
-# LexiAssist - Render.com Blueprint
+# Zuri - Render.com Blueprint
 # Usage: Connect your GitHub repo to Render and select "Use a Blueprint"
 # Docs: https://render.com/docs/blueprint-spec
 
@@ -7,7 +7,7 @@ services:
   # API Gateway - Single public entry point
   # ---------------------------------------------------------------------------
   - type: web
-    name: lexiassist-gateway
+    name: zuri-gateway
     runtime: docker
     rootDir: .
     dockerfilePath: ./services/gateway/Dockerfile
@@ -23,7 +23,7 @@ services:
       - key: REDIS_URL
         fromService:
           type: redis
-          name: lexiassist-redis
+          name: zuri-redis
           property: connectionString
       - key: RATE_LIMIT_RPM
         value: 100
@@ -36,56 +36,56 @@ services:
       - key: CIRCUIT_BREAKER_TIMEOUT
         value: 60s
       - key: ALLOWED_ORIGINS
-        value: https://lexiassist.vercel.app,https://app.lexiassist.com
+        value: https://zuri.vercel.app,https://app.zuri.app
       - key: USER_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-user-service
+          name: zuri-user-service
           property: hostport
       - key: CONTENT_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-content-service
+          name: zuri-content-service
           property: hostport
       - key: ANALYTICS_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-analytics-service
+          name: zuri-analytics-service
           property: hostport
       - key: NOTIFICATION_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-notification-service
+          name: zuri-notification-service
           property: hostport
       - key: SYNC_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-sync-service
+          name: zuri-sync-service
           property: hostport
       - key: AI_ORCHESTRATOR_URL
         fromService:
           type: pserv
-          name: lexiassist-ai-orchestrator
+          name: zuri-ai-orchestrator
           property: hostport
       - key: RETRIEVAL_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-retrieval-service
+          name: zuri-retrieval-service
           property: hostport
       - key: AUDIO_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-audio-service
+          name: zuri-audio-service
           property: hostport
       - key: INGESTION_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-ingestion-service
+          name: zuri-ingestion-service
           property: hostport
       - key: AI_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-ai-monolith
+          name: zuri-ai-monolith
           property: hostport
       - key: AI_SERVICE_TIMEOUT
         value: 120s
@@ -97,7 +97,7 @@ services:
   # Core Go Services (Private)
   # ---------------------------------------------------------------------------
   - type: pserv
-    name: lexiassist-user-service
+    name: zuri-user-service
     runtime: docker
     rootDir: .
     dockerfilePath: ./services/user/Dockerfile
@@ -111,7 +111,7 @@ services:
       - key: REDIS_URL
         fromService:
           type: redis
-          name: lexiassist-redis
+          name: zuri-redis
           property: hostport
       - key: PRIVATE_KEY_ENCRYPTION_KEY
         generateValue: true
@@ -126,7 +126,7 @@ services:
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
     disk:
       name: jwt-keys
@@ -134,7 +134,7 @@ services:
       sizeGB: 1
 
   - type: pserv
-    name: lexiassist-content-service
+    name: zuri-content-service
     runtime: docker
     rootDir: .
     dockerfilePath: ./services/content/Dockerfile
@@ -148,32 +148,32 @@ services:
       - key: REDIS_URL
         fromService:
           type: redis
-          name: lexiassist-redis
+          name: zuri-redis
           property: hostport
       - key: MINIO_ENDPOINT
         fromService:
           type: web
-          name: lexiassist-minio
+          name: zuri-minio
           property: host
       - key: MINIO_ACCESS_KEY
         sync: false
       - key: MINIO_SECRET_KEY
         generateValue: true
       - key: MINIO_BUCKET
-        value: lexiassist-materials
+        value: zuri-materials
       - key: INGESTION_SERVICE_URL
         fromService:
           type: pserv
-          name: lexiassist-ingestion-service
+          name: zuri-ingestion-service
           property: hostport
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
 
   - type: pserv
-    name: lexiassist-analytics-service
+    name: zuri-analytics-service
     runtime: docker
     rootDir: .
     dockerfilePath: ./services/analytics/Dockerfile
@@ -187,19 +187,19 @@ services:
       - key: REDIS_URL
         fromService:
           type: redis
-          name: lexiassist-redis
+          name: zuri-redis
           property: hostport
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
 
   # ---------------------------------------------------------------------------
   # Utility Go Services (Private)
   # ---------------------------------------------------------------------------
   - type: pserv
-    name: lexiassist-notification-service
+    name: zuri-notification-service
     runtime: docker
     rootDir: .
     dockerfilePath: ./services/notification-service/Dockerfile
@@ -219,13 +219,13 @@ services:
       - key: SMTP_PASSWORD
         sync: false
       - key: SMTP_FROM
-        value: noreply@lexiassist.com
+        value: noreply@zuri.app
       - key: FIREBASE_SERVICE_ACCOUNT_PATH
         value: /etc/secrets/firebase-service-account.json
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
     disk:
       name: secrets
@@ -233,7 +233,7 @@ services:
       sizeGB: 1
 
   - type: pserv
-    name: lexiassist-sync-service
+    name: zuri-sync-service
     runtime: docker
     rootDir: .
     dockerfilePath: ./services/sync-service/Dockerfile
@@ -247,18 +247,18 @@ services:
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
 
   # ---------------------------------------------------------------------------
   # Python AI Services (Private)
   # ---------------------------------------------------------------------------
   - type: pserv
-    name: lexiassist-ai-orchestrator
+    name: zuri-ai-orchestrator
     runtime: docker
     rootDir: .
-    dockerfilePath: ./lexiassist-Python Services/services/orchestrator/Dockerfile
-    dockerContext: ./lexiassist-Python Services/services/orchestrator
+    dockerfilePath: ./zuri-Python Services/services/orchestrator/Dockerfile
+    dockerContext: ./zuri-Python Services/services/orchestrator
     plan: starter
     envVars:
       - key: PORT
@@ -268,19 +268,19 @@ services:
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
       - key: DEFAULT_MODEL
         value: gemini-2.5-flash
       - key: ALLOWED_ORIGINS
-        value: https://lexiassist.vercel.app,https://app.lexiassist.com
+        value: https://zuri.vercel.app,https://app.zuri.app
 
   - type: pserv
-    name: lexiassist-ingestion-service
+    name: zuri-ingestion-service
     runtime: docker
     rootDir: .
-    dockerfilePath: ./lexiassist-Python Services/services/ingestion/Dockerfile
-    dockerContext: ./lexiassist-Python Services/services/ingestion
+    dockerfilePath: ./zuri-Python Services/services/ingestion/Dockerfile
+    dockerContext: ./zuri-Python Services/services/ingestion
     plan: starter
     envVars:
       - key: PORT
@@ -288,15 +288,15 @@ services:
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
 
   - type: pserv
-    name: lexiassist-retrieval-service
+    name: zuri-retrieval-service
     runtime: docker
     rootDir: .
-    dockerfilePath: ./lexiassist-Python Services/services/retrieval/Dockerfile
-    dockerContext: ./lexiassist-Python Services/services/retrieval
+    dockerfilePath: ./zuri-Python Services/services/retrieval/Dockerfile
+    dockerContext: ./zuri-Python Services/services/retrieval
     plan: starter
     envVars:
       - key: PORT
@@ -306,15 +306,15 @@ services:
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
 
   - type: pserv
-    name: lexiassist-audio-service
+    name: zuri-audio-service
     runtime: docker
     rootDir: .
-    dockerfilePath: ./lexiassist-Python Services/services/audio/Dockerfile
-    dockerContext: ./lexiassist-Python Services/services/audio
+    dockerfilePath: ./zuri-Python Services/services/audio/Dockerfile
+    dockerContext: ./zuri-Python Services/services/audio
     plan: starter
     envVars:
       - key: PORT
@@ -322,15 +322,15 @@ services:
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
 
   - type: pserv
-    name: lexiassist-evaluation-service
+    name: zuri-evaluation-service
     runtime: docker
     rootDir: .
-    dockerfilePath: ./lexiassist-Python Services/services/evaluation/Dockerfile
-    dockerContext: ./lexiassist-Python Services/services/evaluation
+    dockerfilePath: ./zuri-Python Services/services/evaluation/Dockerfile
+    dockerContext: ./zuri-Python Services/services/evaluation
     plan: starter
     envVars:
       - key: PORT
@@ -340,15 +340,15 @@ services:
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
 
   - type: pserv
-    name: lexiassist-ai-monolith
+    name: zuri-ai-monolith
     runtime: docker
     rootDir: .
-    dockerfilePath: ./lexiassist-ai-main/Dockerfile
-    dockerContext: ./lexiassist-ai-main
+    dockerfilePath: ./zuri-ai-main/Dockerfile
+    dockerContext: ./zuri-ai-main
     plan: standard
     envVars:
       - key: PORT
@@ -358,7 +358,7 @@ services:
       - key: REDIS_URL
         fromService:
           type: redis
-          name: lexiassist-redis
+          name: zuri-redis
           property: hostport
       - key: GOOGLE_API_KEY
         sync: false
@@ -375,16 +375,16 @@ services:
       - key: INTERNAL_API_KEY
         fromService:
           type: web
-          name: lexiassist-gateway
+          name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
       - key: ALLOWED_ORIGINS
-        value: https://lexiassist.vercel.app,https://app.lexiassist.com
+        value: https://zuri.vercel.app,https://app.zuri.app
 
   # ---------------------------------------------------------------------------
   # MinIO - S3-compatible object storage (Private)
   # ---------------------------------------------------------------------------
   - type: pserv
-    name: lexiassist-minio
+    name: zuri-minio
     runtime: docker
     image: minio/minio:latest
     plan: starter
@@ -403,7 +403,7 @@ services:
   # Managed Data Services
   # ---------------------------------------------------------------------------
   - type: redis
-    name: lexiassist-redis
+    name: zuri-redis
     plan: free
     ipAllowList: []
 
@@ -412,7 +412,7 @@ services:
 # Environment Group (shared secrets)
 # ---------------------------------------------------------------------------
 envVarGroups:
-  - name: lexiassist-secrets
+  - name: zuri-secrets
     envVars:
       - key: GEMINI_API_KEY
         sync: false

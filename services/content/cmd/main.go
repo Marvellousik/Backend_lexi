@@ -17,12 +17,12 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"go.uber.org/zap"
 
-	"lexiassist/services/content/internal/handler"
-	"lexiassist/services/content/internal/repository"
-	"lexiassist/services/content/internal/service"
-	contentConfig "lexiassist/services/content/pkg/config"
-	"lexiassist/shared/pkg/database"
-	"lexiassist/shared/pkg/logger"
+	"zuri/services/content/internal/handler"
+	"zuri/services/content/internal/repository"
+	"zuri/services/content/internal/service"
+	contentConfig "zuri/services/content/pkg/config"
+	"zuri/shared/pkg/database"
+	"zuri/shared/pkg/logger"
 )
 
 func main() {

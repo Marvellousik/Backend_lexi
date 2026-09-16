@@ -42,9 +42,13 @@ Desktop.ini
 # ── Data / Logs ────────────────────────────────────────────────────────────
 *.log
 *.pdf
-lexiassist-ai-main/mm1.pdf
-lexiassist-ai-main/mm1_ocr.pdf
-lexiassist-ai-main/reading_assistant/temp_audio/
-lexiassist-Python Services/services/ingestion/*.json
-lexiassist-Python Services/services/ingestion/extracted_text.txt
+zuri-ai-main/mm1.pdf
+zuri-ai-main/mm1_ocr.pdf
+zuri-ai-main/reading_assistant/temp_audio/
+zuri-Python Services/services/audio/temp_audio/*
+!zuri-Python Services/services/audio/temp_audio/.gitkeep
+zuri-Python Services/services/ingestion/*.json
+zuri-Python Services/services/ingestion/extracted_text.txt
 login.json
+tmp_*
+test_*.txt

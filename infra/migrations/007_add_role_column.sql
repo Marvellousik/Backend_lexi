@@ -28,7 +28,7 @@ INSERT INTO auth.users (
     updated_at
 ) VALUES (
     '11111111-1111-1111-1111-111111111111',
-    'admin@lexiassist.dev',
+    'admin@zuri.dev',
     '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW',  -- bcrypt of 'SuperAdmin123!'
     'Super',
     'Admin',
@@ -59,7 +59,7 @@ INSERT INTO auth.users (
     updated_at
 ) VALUES (
     '22222222-2222-2222-2222-222222222222',
-    'test@lexiassist.dev',
+    'test@zuri.dev',
     '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW',  -- bcrypt of 'SuperAdmin123!'
     'Test',
     'User',

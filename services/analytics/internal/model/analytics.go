@@ -36,7 +36,7 @@ type QuizAttempt struct {
 
 // TableName specifies the table name for QuizAttempt.
 func (QuizAttempt) TableName() string {
-	return "lexi_analytics.quiz_attempts"
+	return "zuri_analytics.quiz_attempts"
 }
 
 // QuizAnswer represents a user's answer to a specific question.
@@ -54,7 +54,7 @@ type QuizAnswer struct {
 
 // TableName specifies the table name for QuizAnswer.
 func (QuizAnswer) TableName() string {
-	return "lexi_analytics.quiz_answers"
+	return "zuri_analytics.quiz_answers"
 }
 
 // StudySession represents a user's study session on a specific date.
@@ -71,7 +71,7 @@ type StudySession struct {
 
 // TableName specifies the table name for StudySession.
 func (StudySession) TableName() string {
-	return "lexi_analytics.study_sessions"
+	return "zuri_analytics.study_sessions"
 }
 
 // TopicMastery represents a user's mastery level for a specific topic.
@@ -92,7 +92,7 @@ type TopicMastery struct {
 
 // TableName specifies the table name for TopicMastery.
 func (TopicMastery) TableName() string {
-	return "lexi_analytics.topic_mastery"
+	return "zuri_analytics.topic_mastery"
 }
 
 // AIInteractionType represents the type of AI interaction.
@@ -123,7 +123,7 @@ type AIInteraction struct {
 
 // TableName specifies the table name for AIInteraction.
 func (AIInteraction) TableName() string {
-	return "lexi_analytics.ai_interactions"
+	return "zuri_analytics.ai_interactions"
 }
 
 // GoalType represents the type of learning goal.
@@ -155,7 +155,7 @@ type LearningGoal struct {
 
 // TableName specifies the table name for LearningGoal.
 func (LearningGoal) TableName() string {
-	return "lexi_analytics.learning_goals"
+	return "zuri_analytics.learning_goals"
 }
 
 // UserStudyStats represents aggregated study statistics for a user.

@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"lexiassist/services/gateway/internal/circuitbreaker"
+	"zuri/services/gateway/internal/circuitbreaker"
 )
 
 // OrchestratorClient is a client for the Python AI Orchestrator Service

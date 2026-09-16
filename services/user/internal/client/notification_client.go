@@ -35,7 +35,7 @@ func (c *NotificationClient) SendVerificationEmail(ctx context.Context, userID u
 	reqBody := map[string]interface{}{
 		"user_id": userID,
 		"type":    "email",
-		"title":   "Your Lexi Assist Verification Code",
+		"title":   "Your Zuri Verification Code",
 		"body":    fmt.Sprintf("Your verification code is: %s", code),
 		"data": map[string]interface{}{
 			"template": "email_verification",

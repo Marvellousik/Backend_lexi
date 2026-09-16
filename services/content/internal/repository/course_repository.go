@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"lexiassist/services/content/internal/model"
-	"lexiassist/shared/pkg/database"
+	"zuri/services/content/internal/model"
+	"zuri/shared/pkg/database"
 )
 
 // CourseRepository defines the interface for course data access.

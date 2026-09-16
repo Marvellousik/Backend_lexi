@@ -120,7 +120,7 @@ func (l *Loader) Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		ServiceName: getEnv("SERVICE_NAME", "lexiassist"),
+		ServiceName: getEnv("SERVICE_NAME", "zuri"),
 		Environment: getEnv("ENVIRONMENT", "development"),
 		LogLevel:    getEnv("LOG_LEVEL", "info"),
 		Port:        getEnv("PORT", "8080"),
@@ -174,7 +174,7 @@ func (l *Loader) LoadUserServiceConfig() (*UserServiceConfig, error) {
 		SMTPPort:                smtpPort,
 		SMTPUser:                os.Getenv("SMTP_USER"),
 		SMTPPassword:            os.Getenv("SMTP_PASSWORD"),
-		SMTPFrom:                getEnv("SMTP_FROM", "noreply@lexiassist.com"),
+		SMTPFrom:                getEnv("SMTP_FROM", "noreply@zuri.app"),
 		FrontendURL:             getEnv("FRONTEND_URL", "http://localhost:3000"),
 		NotificationServiceURL:  getEnv("NOTIFICATION_SERVICE_URL", "http://localhost:8084"),
 		InternalAPIKey:          getEnv("INTERNAL_API_KEY", "dev-internal-key"),
@@ -214,7 +214,7 @@ func (l *Loader) LoadContentConfig() (*ContentConfig, error) {
 		S3Endpoint:  getEnv("S3_ENDPOINT", "http://localhost:9000"),
 		S3AccessKey: os.Getenv("S3_ACCESS_KEY"),
 		S3SecretKey: os.Getenv("S3_SECRET_KEY"),
-		S3Bucket:    getEnv("S3_BUCKET", "lexiassist-content"),
+		S3Bucket:    getEnv("S3_BUCKET", "zuri-content"),
 		S3Region:    getEnv("S3_REGION", "us-east-1"),
 	}, nil
 }

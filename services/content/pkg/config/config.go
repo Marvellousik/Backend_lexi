@@ -42,7 +42,7 @@ func Load() *Config {
 		LogLevel:    getEnv("LOG_LEVEL", "info"),
 
 		// Database
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://lexiassist:lexiassist_secret@localhost:5432/lexiassist?sslmode=disable"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://zuri:zuri_secret@localhost:5432/zuri?sslmode=disable"),
 
 		// JWT
 		JWTPublicKeyPath: getEnv("JWT_PUBLIC_KEY_PATH", "/app/config/jwt_public.pem"),
@@ -56,7 +56,7 @@ func Load() *Config {
 		MinIOEndpoint:  getEnv("MINIO_ENDPOINT", "localhost:9000"),
 		MinIOAccessKey: getEnv("MINIO_ACCESS_KEY", "minioadmin"),
 		MinIOSecretKey: getEnv("MINIO_SECRET_KEY", "minioadmin_secret"),
-		MinIOBucket:    getEnv("MINIO_BUCKET", "lexiassist-materials"),
+		MinIOBucket:    getEnv("MINIO_BUCKET", "zuri-materials"),
 		MinIOUseSSL:    getEnv("MINIO_USE_SSL", "false") == "true",
 		MinIOPublicURL: getEnv("MINIO_PUBLIC_URL", ""),
 	}

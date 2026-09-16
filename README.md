@@ -1,4 +1,4 @@
-# LexiAssist — AI-Powered Learning Platform
+# Zuri — AI-Powered Learning Platform
 
 A microservices-based learning platform with 6 Go services, 5 Python AI services, PostgreSQL, Redis, and MinIO.
 
@@ -335,56 +335,84 @@ Key variables (set in `infra/.env` or docker-compose):
 ## Project Structure
 
 ```
-lexi-assist/
-├── services/
-│   ├── gateway/          # API Gateway (Echo)
-│   ├── user/             # User Service (Echo)
-│   ├── content/          # Content Service (Echo)
-│   ├── analytics/        # Analytics Service (Echo)
-│   ├── notification-service/  # Notification Service (Gin)
-│   └── sync-service/     # Sync Service (Gin)
-├── shared/pkg/           # Shared Go packages
-├── lexiassist-Python Services/
+Backend_lexi/
+├── services/                     # Go microservices
+│   ├── gateway/                  # API Gateway (Echo)
+│   ├── user/                     # User Service (Echo)
+│   ├── content/                  # Content Service (Echo)
+│   ├── analytics/                # Analytics Service (Echo)
+│   ├── notification-service/     # Notification Service (Gin)
+│   └── sync-service/             # Sync Service (Gin)
+├── shared/pkg/                   # Shared Go packages (auth, database, redis, logger, middleware)
+├── zuri-Python Services/   # Python AI microservices (FastAPI)
 │   └── services/
-│       ├── orchestrator/ # AI Orchestrator (FastAPI)
-│       ├── ingestion/    # Ingestion Service (FastAPI)
-│       ├── retrieval/    # Retrieval Service (FastAPI)
-│       ├── audio/        # Audio Service (FastAPI)
-│       └── evaluation/   # Evaluation Service (FastAPI)
-├── infra/
-│   ├── migrations/       # SQL migrations (5 schemas)
-│   ├── docker-compose.yml
+│       ├── orchestrator/         # AI Orchestrator (FastAPI)
+│       ├── ingestion/            # Ingestion Service (FastAPI)
+│       ├── retrieval/            # Retrieval Service (FastAPI)
+│       ├── audio/                # Audio Service (FastAPI)
+│       └── evaluation/           # Evaluation Service (FastAPI)
+├── zuri-ai-main/           # Python AI Monolith (FastAPI)
+│   ├── reading_assistant/        # Reading engine & TTS
+│   ├── study_buddy/              # Flashcards & quizzes
+│   └── writing_assistant/        # Notes & transcription
+├── docs/                         # Technical documentation & integration guides
+│   ├── api/                      # API & service architecture specs
+│   ├── integration/              # Frontend, mobile & staging integration guides
+│   ├── deployment/               # Database & Render deployment runbooks
+│   └── demo/                     # Product demo scripts
+├── tests/                        # Automated tests, smoke scripts & test fixtures
+│   ├── integration/              # Python & cross-service integration tests
+│   ├── e2e/                      # Gateway smoke test scripts
+│   ├── fixtures/                 # Test payloads and mock files
+│   └── scripts/                  # Standalone verification scripts
+├── scripts/                      # Developer utility scripts (syntax verification)
+├── infra/                        # Infrastructure & deployment configuration
+│   ├── migrations/               # SQL schema migrations (001-009)
+│   │   └── supabase/             # Supabase schema variants
+│   ├── deploy/                   # Deployment blueprints (render-supabase.yaml)
+│   ├── docker-compose.yml        # Full local stack
 │   └── .env
-├── vendor/               # Go vendor dependencies
+├── vendor/                       # Go vendor dependencies
 ├── go.mod / go.sum
+├── Makefile
+├── render.yaml
 └── README.md
 ```
+
+Detailed documentation index: [docs/README.md](file:///workspaces/Backend_lexi/docs/README.md)  
+Test suite details: [tests/README.md](file:///workspaces/Backend_lexi/tests/README.md)
 
 ---
 
 ## Useful Commands
 
-```batch
-:: Start all services
+```bash
+# Start all services with Docker Compose
 cd infra && docker-compose up -d
 
-:: Stop all services
+# Stop all services
 cd infra && docker-compose down
 
-:: View logs
+# View logs
 docker-compose logs gateway --tail=50
 docker-compose logs ai-orchestrator --tail=50
 
-:: Restart a service
+# Restart a service
 docker-compose restart gateway
 
-:: Rebuild a service after code changes
-docker-compose build notification-service && docker-compose up -d notification-service
+# Build all Go binaries
+make build
 
-:: Run Go unit tests
-go test -v ./services/user/internal/...
+# Run all Go unit tests
+make test
 
-:: Check container status
+# Run Go tests and Python syntax verification
+make test-all
+
+# Clean build artifacts
+make clean
+
+# Check container status
 docker-compose ps
 ```
 
@@ -396,9 +424,9 @@ docker-compose ps
 |---------|----------|
 | "Connection refused" | Run `docker-compose up -d` and wait 60s |
 | "401 Unauthorized" | Token expired — login again |
-| "rate limit exceeded" | Wait 60s or check Redis: `docker exec lexiassist-redis redis-cli ping` |
+| "rate limit exceeded" | Wait 60s or check Redis: `docker exec zuri-redis redis-cli ping` |
 | "503 Service Unavailable" | Circuit breaker open — wait 60s or `docker-compose restart gateway` |
 | Gateway shows "degraded" | Check which upstream is unhealthy in the health response |
 | Docker build fails | Ensure Docker Desktop is running, try `docker-compose build --no-cache` |
-| Database connection failed | `docker logs lexiassist-postgres` to check |
+| Database connection failed | `docker logs zuri-postgres` to check |
 | Port already in use | `netstat -ano \| findstr :8080` to find the process |

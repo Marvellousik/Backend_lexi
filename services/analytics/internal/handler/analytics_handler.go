@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"lexiassist/services/analytics/internal/service"
-	"lexiassist/shared/pkg/logger"
+	"zuri/services/analytics/internal/service"
+	"zuri/shared/pkg/logger"
 )
 
 // AnalyticsHandler handles analytics-related HTTP requests.

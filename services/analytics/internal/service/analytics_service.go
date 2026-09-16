@@ -12,8 +12,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"lexiassist/services/analytics/internal/model"
-	"lexiassist/services/analytics/internal/repository"
+	"zuri/services/analytics/internal/model"
+	"zuri/services/analytics/internal/repository"
 )
 
 var (

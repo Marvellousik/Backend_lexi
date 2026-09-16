@@ -1,27 +1,27 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: lexiassist-postgres
+    container_name: zuri-postgres
     environment:
-      POSTGRES_USER: lexiassist
-      POSTGRES_PASSWORD: lexiassist_secret
-      POSTGRES_DB: lexiassist
+      POSTGRES_USER: zuri
+      POSTGRES_PASSWORD: zuri_secret
+      POSTGRES_DB: zuri
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../infra/migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lexiassist"]
+      test: ["CMD-SHELL", "pg_isready -U zuri"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - lexiassist-network
+      - zuri-network
 
   redis:
     image: redis:7-alpine
-    container_name: lexiassist-redis
+    container_name: zuri-redis
     ports:
       - "6379:6379"
     volumes:
@@ -32,19 +32,19 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - lexiassist-network
+      - zuri-network
 
   user-service:
     build:
       context: ..
-      dockerfile: Dockerfile.user-service
-    container_name: lexiassist-user-service
+      dockerfile: services/user/Dockerfile
+    container_name: zuri-user-service
     environment:
       - SERVICE_NAME=user-service
       - ENVIRONMENT=development
       - LOG_LEVEL=info
       - PORT=8081
-      - DATABASE_URL=postgres://lexiassist:lexiassist_secret@postgres:5432/lexiassist?sslmode=disable
+      - DATABASE_URL=postgres://zuri:zuri_secret@postgres:5432/zuri?sslmode=disable
       - REDIS_URL=redis:6379
       - PRIVATE_KEY_ENCRYPTION_KEY=your-secure-master-key-min-32-chars-long-1234
       - BCRYPT_COST=12
@@ -58,14 +58,14 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
   gateway:
     build:
       context: ..
       dockerfile: services/gateway/Dockerfile
-    container_name: lexiassist-gateway
+    container_name: zuri-gateway
     environment:
       - SERVICE_NAME=gateway
       - ENVIRONMENT=development
@@ -89,7 +89,7 @@ services:
       - user-service
       - redis
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
 volumes:
@@ -97,5 +97,5 @@ volumes:
   redis_data:
 
 networks:
-  lexiassist-network:
+  zuri-network:
     driver: bridge

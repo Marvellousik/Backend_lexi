@@ -1,4 +1,4 @@
-module lexiassist
+module zuri
 
 go 1.25.0
 

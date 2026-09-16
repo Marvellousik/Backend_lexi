@@ -8,10 +8,10 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"lexiassist/shared/pkg/logger"
+	"zuri/shared/pkg/logger"
 
-	"lexiassist/services/notification-service/models"
-	"lexiassist/services/notification-service/services"
+	"zuri/services/notification-service/models"
+	"zuri/services/notification-service/services"
 )
 
 // Worker processes notifications in the background
@@ -71,7 +71,7 @@ func (w *Worker) processPendingNotifications() {
 	// Get pending notifications
 	var notifications []models.NotificationQueue
 	err := w.db.Select(&notifications, `
-		SELECT * FROM lexi_notification.queue 
+		SELECT * FROM zuri_notification.queue 
 		WHERE status = $1 
 		AND scheduled_at <= CURRENT_TIMESTAMP
 		AND retry_count < 3
@@ -109,8 +109,8 @@ func (w *Worker) processNotification(ctx context.Context, n *models.Notification
 		       COALESCE(p.email_enabled, true) as email_enabled,
 		       u.email as user_email,
 		       COALESCE(p.push_device_tokens, ARRAY[]::text[]) as push_device_tokens
-		FROM lexi_auth.users u
-		LEFT JOIN lexi_notification.preferences p ON p.user_id = u.id
+		FROM zuri_auth.users u
+		LEFT JOIN zuri_notification.preferences p ON p.user_id = u.id
 		WHERE u.id = $1`, n.UserID)
 
 	if err != nil {
@@ -201,7 +201,7 @@ func (w *Worker) sendEmailNotification(n *models.NotificationQueue, email string
 // removeInvalidToken removes an invalid FCM token from user's devices
 func (w *Worker) removeInvalidToken(userID interface{}, token string) {
 	_, err := w.db.Exec(`
-		UPDATE lexi_notification.preferences 
+		UPDATE zuri_notification.preferences 
 		SET push_device_tokens = array_remove(push_device_tokens, $1),
 		    updated_at = CURRENT_TIMESTAMP
 		WHERE user_id = $2`, token, userID)
@@ -217,7 +217,7 @@ func (w *Worker) removeInvalidToken(userID interface{}, token string) {
 func (w *Worker) markSent(notificationID interface{}) {
 	now := time.Now()
 	_, err := w.db.Exec(`
-		UPDATE lexi_notification.queue 
+		UPDATE zuri_notification.queue 
 		SET status = $1, sent_at = $2
 		WHERE id = $3`, models.StatusSent, now, notificationID)
 
@@ -229,7 +229,7 @@ func (w *Worker) markSent(notificationID interface{}) {
 // markFailed marks a notification as failed
 func (w *Worker) markFailed(notificationID interface{}, reason string) {
 	_, err := w.db.Exec(`
-		UPDATE lexi_notification.queue 
+		UPDATE zuri_notification.queue 
 		SET status = $1, error_message = $2
 		WHERE id = $3`, models.StatusFailed, reason, notificationID)
 
@@ -241,7 +241,7 @@ func (w *Worker) markFailed(notificationID interface{}, reason string) {
 // retryOrFail increments retry count or marks as failed
 func (w *Worker) retryOrFail(notificationID interface{}, reason string) {
 	_, err := w.db.Exec(`
-		UPDATE lexi_notification.queue 
+		UPDATE zuri_notification.queue 
 		SET retry_count = retry_count + 1, error_message = $1
 		WHERE id = $2`, reason, notificationID)
 
@@ -255,7 +255,7 @@ func (w *Worker) processDueReminders() {
 	// Get due reminders
 	var reminders []models.ScheduledReminder
 	err := w.db.Select(&reminders, `
-		SELECT * FROM lexi_notification.scheduled_reminders 
+		SELECT * FROM zuri_notification.scheduled_reminders 
 		WHERE is_active = true 
 		AND sent_at IS NULL 
 		AND scheduled_for <= CURRENT_TIMESTAMP
@@ -298,7 +298,7 @@ func (w *Worker) processReminder(r *models.ScheduledReminder) {
 	}
 
 	_, err := w.db.NamedExec(`
-		INSERT INTO lexi_notification.queue 
+		INSERT INTO zuri_notification.queue 
 		(user_id, notification_type, channel, title, body, data, scheduled_at, status)
 		VALUES (:user_id, :notification_type, :channel, :title, :body, :data, :scheduled_at, :status)`,
 		queue)
@@ -310,7 +310,7 @@ func (w *Worker) processReminder(r *models.ScheduledReminder) {
 
 	// Mark reminder as sent
 	_, err = w.db.Exec(`
-		UPDATE lexi_notification.scheduled_reminders 
+		UPDATE zuri_notification.scheduled_reminders 
 		SET sent_at = CURRENT_TIMESTAMP
 		WHERE id = $1`, r.ID)
 
@@ -373,7 +373,7 @@ func (w *Worker) scheduleNextRecurrence(r *models.ScheduledReminder) {
 	}
 
 	_, err := w.db.NamedExec(`
-		INSERT INTO lexi_notification.scheduled_reminders 
+		INSERT INTO zuri_notification.scheduled_reminders 
 		(user_id, reminder_type, title, body, scheduled_for, timezone,
 		 recurrence, recurrence_end_date, entity_type, entity_id, is_active)
 		VALUES (:user_id, :reminder_type, :title, :body, :scheduled_for, :timezone,

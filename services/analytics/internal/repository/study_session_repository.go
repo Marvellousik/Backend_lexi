@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"lexiassist/services/analytics/internal/model"
-	"lexiassist/shared/pkg/database"
+	"zuri/services/analytics/internal/model"
+	"zuri/shared/pkg/database"
 )
 
 // StudySessionRepository defines the interface for study session data access.

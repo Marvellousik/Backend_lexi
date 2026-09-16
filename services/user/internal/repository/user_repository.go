@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"lexiassist/services/user/internal/model"
+	"zuri/services/user/internal/model"
 )
 
 // UserRepository defines the interface for user data access.

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"lexiassist/services/gateway/internal/circuitbreaker"
+	"zuri/services/gateway/internal/circuitbreaker"
 )
 
 // Config holds client configuration
