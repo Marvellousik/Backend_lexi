@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"lexiassist/shared/pkg/logger"
+	"zuri/shared/pkg/logger"
 )
 
 // Logger returns a Gin middleware for request logging.

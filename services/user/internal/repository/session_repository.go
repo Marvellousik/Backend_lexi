@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"lexiassist/services/user/internal/model"
+	"zuri/services/user/internal/model"
 )
 
 // SessionRepository defines the interface for session data access.

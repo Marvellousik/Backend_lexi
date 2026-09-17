@@ -13,11 +13,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"lexiassist/services/user/internal/model"
-	"lexiassist/services/user/internal/repository"
-	"lexiassist/services/user/internal/service"
-	"lexiassist/shared/pkg/config"
-	"lexiassist/shared/pkg/logger"
+	"zuri/services/user/internal/model"
+	"zuri/services/user/internal/repository"
+	"zuri/services/user/internal/service"
+	"zuri/shared/pkg/auth"
+	"zuri/shared/pkg/config"
+	"zuri/shared/pkg/logger"
 )
 
 // mockRedisClient is a mock implementation of Redis client for testing.
@@ -423,7 +424,9 @@ func TestUserService_GetProfile(t *testing.T) {
 
 func TestUserService_ChangePassword(t *testing.T) {
 	userID := uuid.New()
-	hashedPassword := "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
+	hasher := auth.NewPasswordHasher(10)
+	hashedPassword, err := hasher.HashPassword("password123")
+	require.NoError(t, err)
 
 	tests := []struct {
 		name        string

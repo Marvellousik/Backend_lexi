@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"lexiassist/shared/pkg/logger"
+	"zuri/shared/pkg/logger"
 )
 
 // EmailService handles SMTP email sending
@@ -36,7 +36,7 @@ func NewEmailService() *EmailService {
 	}
 
 	if from == "" {
-		from = "notifications@lexiassist.com"
+		from = "notifications@zuri.app"
 	}
 
 	logger.Info("Email service initialized",
@@ -94,7 +94,7 @@ func (s *EmailService) SendHTMLEmail(to, subject, htmlBody string) error {
 	}
 
 	// Create multipart message
-	boundary := "boundary-lexiassist-" + generateBoundary()
+	boundary := "boundary-zuri-" + generateBoundary()
 
 	var msg bytes.Buffer
 	fmt.Fprintf(&msg, "To: %s\r\n", to)
@@ -187,7 +187,7 @@ func init() {
             <p><a href="{{.QuizURL}}" style="background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Results</a></p>
         </div>
         <div class="footer">
-            <p>You're receiving this because you completed a quiz on LexiAssist.</p>
+            <p>You're receiving this because you completed a quiz on Zuri.</p>
         </div>
     </div>
 </body>
@@ -234,7 +234,7 @@ func init() {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Lexi Assist Verification Code</title>
+    <title>Your Zuri Verification Code</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
@@ -361,13 +361,13 @@ func init() {
     <div class="wrapper">
         <div class="container">
             <div class="logo-area">
-                <div class="logo-text">Lexi Assist<span class="logo-dot"></span></div>
+                <div class="logo-text">Zuri<span class="logo-dot"></span></div>
             </div>
             <div class="content">
                 <h2 class="title">Verify your email address</h2>
                 <div class="greeting">Hello,</div>
                 <div class="text">
-                    Use the verification code below to complete your sign-in or account verification for Lexi Assist.
+                    Use the verification code below to complete your sign-in or account verification for Zuri.
                 </div>
                 <div class="code-container">
                     <div class="code-box">
@@ -381,7 +381,7 @@ func init() {
                 </p>
             </div>
             <div class="footer">
-                <p class="footer-text">&copy; 2026 Lexi Assist. All rights reserved.</p>
+                <p class="footer-text">&copy; 2026 Zuri. All rights reserved.</p>
             </div>
         </div>
     </div>
@@ -410,12 +410,12 @@ func init() {
         </div>
         <div class="content">
             <p>Hi {{.Name}},</p>
-            <p>We received a request to reset your LexiAssist password. Use the code below:</p>
+            <p>We received a request to reset your Zuri password. Use the code below:</p>
             <p class="code">{{.Code}}</p>
             <p>This code expires in 15 minutes. If you didn't request this, you can safely ignore this email.</p>
         </div>
         <div class="footer">
-            <p>You're receiving this because a password reset was requested on LexiAssist.</p>
+            <p>You're receiving this because a password reset was requested on Zuri.</p>
         </div>
     </div>
 </body>

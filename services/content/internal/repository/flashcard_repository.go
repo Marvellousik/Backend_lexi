@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"lexiassist/services/content/internal/model"
-	"lexiassist/shared/pkg/database"
+	"zuri/services/content/internal/model"
+	"zuri/shared/pkg/database"
 )
 
 // FlashcardRepository defines the interface for flashcard data access.

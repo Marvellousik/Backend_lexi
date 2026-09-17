@@ -5,7 +5,7 @@ ALTER TABLE analytics.learning_goals
     ADD COLUMN IF NOT EXISTS current_value INTEGER DEFAULT 0,
     ADD COLUMN IF NOT EXISTS goal_type VARCHAR(50) DEFAULT 'study_time';
 
--- Also update the lexi schema variant
-ALTER TABLE lexi_analytics.learning_goals
+-- Also update the zuri schema variant
+ALTER TABLE zuri_analytics.learning_goals
     ADD COLUMN IF NOT EXISTS current_value INTEGER DEFAULT 0,
     ADD COLUMN IF NOT EXISTS goal_type VARCHAR(50) DEFAULT 'study_time';

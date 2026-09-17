@@ -14,12 +14,12 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
-	"lexiassist/services/sync-service/handlers"
-	"lexiassist/services/sync-service/websocket"
+	"zuri/services/sync-service/handlers"
+	"zuri/services/sync-service/websocket"
 
-	"lexiassist/shared/pkg/config"
-	"lexiassist/shared/pkg/logger"
-	"lexiassist/shared/pkg/middleware"
+	"zuri/shared/pkg/config"
+	"zuri/shared/pkg/logger"
+	"zuri/shared/pkg/middleware"
 )
 
 func main() {
@@ -42,7 +42,7 @@ func main() {
 	// Load configuration
 	cfgLoader := config.NewLoader().
 		Default("PORT", "8085").
-		Default("DATABASE_URL", "postgres://lexiassist:lexiassist_secret@localhost:5432/lexiassist?sslmode=disable")
+		Default("DATABASE_URL", "postgres://zuri:zuri_secret@localhost:5432/zuri?sslmode=disable")
 	cfg, err := cfgLoader.Load()
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to load configuration: %v", err))

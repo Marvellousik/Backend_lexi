@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"lexiassist/services/user/internal/model"
+	"zuri/services/user/internal/model"
 )
 
 // MockUserRepository is a mock implementation of UserRepository.

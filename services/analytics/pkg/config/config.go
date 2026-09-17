@@ -29,7 +29,7 @@ func Load() *Config {
 		LogLevel:    getEnv("LOG_LEVEL", "info"),
 
 		// Database
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://lexiassist:lexiassist_secret@localhost:5432/lexiassist?sslmode=disable"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://zuri:zuri_secret@localhost:5432/zuri?sslmode=disable"),
 
 		// Service settings
 		DefaultPageSize: getEnvAsInt("DEFAULT_PAGE_SIZE", 20),

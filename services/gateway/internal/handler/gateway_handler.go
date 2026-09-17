@@ -8,9 +8,9 @@ import (
 	
 	"github.com/labstack/echo/v4"
 	
-	"lexiassist/services/gateway/internal/config"
-	"lexiassist/services/gateway/internal/middleware"
-	"lexiassist/services/gateway/internal/proxy"
+	"zuri/services/gateway/internal/config"
+	"zuri/services/gateway/internal/middleware"
+	"zuri/services/gateway/internal/proxy"
 )
 
 // GatewayHandler handles gateway requests.

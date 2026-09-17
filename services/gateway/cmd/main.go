@@ -15,13 +15,13 @@ import (
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 	
-	"lexiassist/services/gateway/internal/config"
-	"lexiassist/services/gateway/internal/handler"
-	"lexiassist/services/gateway/internal/middleware"
-	"lexiassist/services/gateway/internal/proxy"
-	"lexiassist/shared/pkg/auth"
-	"lexiassist/shared/pkg/logger"
-	"lexiassist/shared/pkg/redis"
+	"zuri/services/gateway/internal/config"
+	"zuri/services/gateway/internal/handler"
+	"zuri/services/gateway/internal/middleware"
+	"zuri/services/gateway/internal/proxy"
+	"zuri/shared/pkg/auth"
+	"zuri/shared/pkg/logger"
+	"zuri/shared/pkg/redis"
 )
 
 func main() {

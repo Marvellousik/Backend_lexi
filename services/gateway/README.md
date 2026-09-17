@@ -1,6 +1,6 @@
 # API Gateway
 
-The API Gateway is the fortress wall of LexiAssist. It stands on port 8080 and handles all incoming traffic.
+The API Gateway is the fortress wall of Zuri. It stands on port 8080 and handles all incoming traffic.
 
 ## Features
 
@@ -103,10 +103,10 @@ docker-compose -f infra/docker-compose.yml up -d postgres redis
 
 # Start User Service (required for public key)
 docker run -d --name user-service --network host \
-  -e DATABASE_URL=postgres://lexiassist:lexiassist_secret@localhost:5432/lexiassist \
+  -e DATABASE_URL=postgres://zuri:zuri_secret@localhost:5432/zuri \
   -e REDIS_URL=localhost:6379 \
   -e PRIVATE_KEY_ENCRYPTION_KEY=your-secure-master-key-min-32-chars-long-1234 \
-  lexiassist/user-service
+  zuri/user-service
 
 # Start Gateway
 go run ./services/gateway/cmd/main.go

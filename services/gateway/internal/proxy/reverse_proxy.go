@@ -13,7 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	
-	"lexiassist/shared/pkg/logger"
+	"zuri/shared/pkg/logger"
 )
 
 // ReverseProxy handles proxying requests to upstream services.

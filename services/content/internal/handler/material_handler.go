@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"lexiassist/services/content/internal/service"
-	"lexiassist/shared/pkg/logger"
+	"zuri/services/content/internal/service"
+	"zuri/shared/pkg/logger"
 )
 
 // MaterialHandler handles material-related HTTP requests.

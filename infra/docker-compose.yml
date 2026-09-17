@@ -2,28 +2,28 @@ services:
   # PostgreSQL Database
   postgres:
     image: pgvector/pgvector:pg15
-    container_name: lexiassist-postgres
+    container_name: zuri-postgres
     environment:
-      POSTGRES_USER: lexiassist
-      POSTGRES_PASSWORD: lexiassist_secret
-      POSTGRES_DB: lexiassist
+      POSTGRES_USER: zuri
+      POSTGRES_PASSWORD: zuri_secret
+      POSTGRES_DB: zuri
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lexiassist"]
+      test: ["CMD-SHELL", "pg_isready -U zuri"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - lexiassist-network
+      - zuri-network
 
   # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: lexiassist-redis
+    container_name: zuri-redis
     ports:
       - "6379:6379"
     volumes:
@@ -34,20 +34,20 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - lexiassist-network
+      - zuri-network
 
   # User Service
   user-service:
     build:
       context: ..
       dockerfile: services/user/Dockerfile
-    container_name: lexiassist-user-service
+    container_name: zuri-user-service
     environment:
       - SERVICE_NAME=user-service
       - ENVIRONMENT=development
       - LOG_LEVEL=info
       - PORT=8081
-      - DATABASE_URL=postgresql://lexiassist:lexiassist_secret@postgres:5432/lexiassist?sslmode=disable
+      - DATABASE_URL=postgresql://zuri:zuri_secret@postgres:5432/zuri?sslmode=disable
       - REDIS_URL=redis:6379
       - PRIVATE_KEY_ENCRYPTION_KEY=${PRIVATE_KEY_ENCRYPTION_KEY:-your-secure-master-key-min-32-chars-long}
       - BCRYPT_COST=12
@@ -68,7 +68,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
   # Content Service
@@ -76,19 +76,19 @@ services:
     build:
       context: ..
       dockerfile: services/content/Dockerfile
-    image: lexiassist/content-service:latest
-    container_name: lexiassist-content-service
+    image: zuri/content-service:latest
+    container_name: zuri-content-service
     environment:
       - SERVICE_NAME=content-service
       - ENVIRONMENT=development
       - LOG_LEVEL=info
       - PORT=8082
-      - DATABASE_URL=postgresql://lexiassist:lexiassist_secret@postgres:5432/lexiassist?sslmode=disable
+      - DATABASE_URL=postgresql://zuri:zuri_secret@postgres:5432/zuri?sslmode=disable
       - REDIS_URL=redis:6379
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin_secret
-      - MINIO_BUCKET=lexiassist-materials
+      - MINIO_BUCKET=zuri-materials
       - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-}
       - INGESTION_SERVICE_URL=http://ingestion-service:5002
       - REDIS_URL=redis:6379
@@ -108,7 +108,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
   # Analytics Service
@@ -116,14 +116,14 @@ services:
     build:
       context: ..
       dockerfile: services/analytics/Dockerfile
-    image: lexiassist/analytics-service:latest
-    container_name: lexiassist-analytics-service
+    image: zuri/analytics-service:latest
+    container_name: zuri-analytics-service
     environment:
       - SERVICE_NAME=analytics-service
       - ENVIRONMENT=development
       - LOG_LEVEL=info
       - PORT=8083
-      - DATABASE_URL=postgresql://lexiassist:lexiassist_secret@postgres:5432/lexiassist?sslmode=disable
+      - DATABASE_URL=postgresql://zuri:zuri_secret@postgres:5432/zuri?sslmode=disable
       - REDIS_URL=redis:6379
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-dev-internal-key}
     ports:
@@ -139,7 +139,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
   # Notification Service
@@ -147,14 +147,14 @@ services:
     build:
       context: ..
       dockerfile: services/notification-service/Dockerfile
-    image: lexiassist/notification-service:latest
-    container_name: lexiassist-notification-service
+    image: zuri/notification-service:latest
+    container_name: zuri-notification-service
     environment:
       - SERVICE_NAME=notification-service
       - ENVIRONMENT=development
       - LOG_LEVEL=info
       - PORT=8084
-      - DATABASE_URL=postgresql://lexiassist:lexiassist_secret@postgres:5432/lexiassist?sslmode=disable
+      - DATABASE_URL=postgresql://zuri:zuri_secret@postgres:5432/zuri?sslmode=disable
       - REDIS_URL=redis:6379
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-dev-internal-key}
       # SMTP Configuration (optional - for email notifications)
@@ -162,7 +162,7 @@ services:
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USERNAME=${SMTP_USERNAME:-}
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
-      - SMTP_FROM=${SMTP_FROM:-notifications@lexiassist.com}
+      - SMTP_FROM=${SMTP_FROM:-notifications@zuri.app}
       # Firebase Configuration (optional - for push notifications)
       - FIREBASE_SERVICE_ACCOUNT_PATH=${FIREBASE_SERVICE_ACCOUNT_PATH:-}
     ports:
@@ -178,7 +178,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
   # Sync Service
@@ -186,13 +186,13 @@ services:
     build:
       context: ..
       dockerfile: services/sync-service/Dockerfile
-    container_name: lexiassist-sync-service
+    container_name: zuri-sync-service
     environment:
       - SERVICE_NAME=sync-service
       - ENVIRONMENT=development
       - LOG_LEVEL=info
       - PORT=8085
-      - DATABASE_URL=postgresql://lexiassist:lexiassist_secret@postgres:5432/lexiassist?sslmode=disable
+      - DATABASE_URL=postgresql://zuri:zuri_secret@postgres:5432/zuri?sslmode=disable
       - REDIS_URL=redis:6379
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-dev-internal-key}
     ports:
@@ -208,7 +208,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
   # Gateway Service
@@ -216,8 +216,8 @@ services:
     build:
       context: ..
       dockerfile: services/gateway/Dockerfile
-    image: lexiassist/gateway:latest
-    container_name: lexiassist-gateway
+    image: zuri/gateway:latest
+    container_name: zuri-gateway
     environment:
       - SERVICE_NAME=gateway
       - ENVIRONMENT=development
@@ -252,13 +252,13 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
   # MinIO Object Storage (for Content Service)
   minio:
     image: minio/minio:latest
-    container_name: lexiassist-minio
+    container_name: zuri-minio
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin_secret
@@ -274,18 +274,18 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - lexiassist-network
+      - zuri-network
 
   # Academic Context & Intelligence Service (FastAPI — Port 8086)
   academic-service:
     build:
       context: ..
       dockerfile: academic_service/Dockerfile
-    image: lexiassist/academic-service:latest
-    container_name: lexiassist-academic-service
+    image: zuri/academic-service:latest
+    container_name: zuri-academic-service
     environment:
       - PORT=8086
-      - DATABASE_URL=postgresql://lexiassist:lexiassist_secret@postgres:5432/lexiassist
+      - DATABASE_URL=postgresql://zuri:zuri_secret@postgres:5432/zuri
       - REDIS_URL=redis:6379
       - AI_SERVICE_URL=http://ai-service:5005
       - NOTIFICATION_SERVICE_URL=http://notification-service:8084
@@ -304,19 +304,19 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
-  # Lexi AI Microservice & 13-Stage Gateway Pipeline (FastAPI — Port 5005)
+  # Zuri AI Microservice & 13-Stage Gateway Pipeline (FastAPI — Port 5005)
   ai-service:
     build:
       context: ..
       dockerfile: ai_service/Dockerfile
-    image: lexiassist/ai-service:latest
-    container_name: lexiassist-ai-service
+    image: zuri/ai-service:latest
+    container_name: zuri-ai-service
     environment:
       - PORT=5005
-      - DATABASE_URL=postgresql://lexiassist:lexiassist_secret@postgres:5432/lexiassist
+      - DATABASE_URL=postgresql://zuri:zuri_secret@postgres:5432/zuri
       - REDIS_URL=redis:6379
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - COHERE_API_KEY=${COHERE_API_KEY:-}
@@ -335,7 +335,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - lexiassist-network
+      - zuri-network
     restart: unless-stopped
 
 volumes:
@@ -344,6 +344,6 @@ volumes:
   minio_data:
 
 networks:
-  lexiassist-network:
+  zuri-network:
     driver: bridge
 

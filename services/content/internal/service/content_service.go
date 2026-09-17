@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 
-	"lexiassist/services/content/internal/model"
-	"lexiassist/services/content/internal/repository"
+	"zuri/services/content/internal/model"
+	"zuri/services/content/internal/repository"
 )
 
 var (

@@ -1,6 +1,6 @@
 # User Service
 
-The User Service is the identity management service for LexiAssist. It handles user authentication, authorization, profile management, and session management.
+The User Service is the identity management service for Zuri. It handles user authentication, authorization, profile management, and session management.
 
 ## Features
 
@@ -110,7 +110,7 @@ make migrate-up
 
 3. Run the service:
 ```bash
-export DATABASE_URL="postgres://lexiassist:lexiassist_secret@localhost:5432/lexiassist?sslmode=disable"
+export DATABASE_URL="postgres://zuri:zuri_secret@localhost:5432/zuri?sslmode=disable"
 export REDIS_URL="localhost:6379"
 export PRIVATE_KEY_ENCRYPTION_KEY="your-secure-master-key-min-32-chars-long"
 make run-user-service

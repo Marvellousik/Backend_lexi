@@ -14,12 +14,12 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 
-	"lexiassist/services/analytics/internal/handler"
-	"lexiassist/services/analytics/internal/repository"
-	"lexiassist/services/analytics/internal/service"
-	analyticsConfig "lexiassist/services/analytics/pkg/config"
-	"lexiassist/shared/pkg/database"
-	"lexiassist/shared/pkg/logger"
+	"zuri/services/analytics/internal/handler"
+	"zuri/services/analytics/internal/repository"
+	"zuri/services/analytics/internal/service"
+	analyticsConfig "zuri/services/analytics/pkg/config"
+	"zuri/shared/pkg/database"
+	"zuri/shared/pkg/logger"
 )
 
 func main() {

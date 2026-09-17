@@ -7,8 +7,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"lexiassist/services/user/internal/service"
-	"lexiassist/shared/pkg/logger"
+	"zuri/services/user/internal/service"
+	"zuri/shared/pkg/logger"
 )
 
 // AuthHandler handles authentication-related HTTP requests.

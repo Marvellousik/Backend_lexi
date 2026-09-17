@@ -9,8 +9,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"lexiassist/services/gateway/internal/clients"
-	"lexiassist/shared/pkg/logger"
+	"zuri/services/gateway/internal/clients"
+	"zuri/shared/pkg/logger"
 )
 
 // AIHandler handles AI service proxy endpoints.

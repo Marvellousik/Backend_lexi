@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"lexiassist/services/user/internal/service"
+	"zuri/services/user/internal/service"
 )
 
 // UserHandler handles user profile-related HTTP requests.

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"go.uber.org/zap"
-	"lexiassist/shared/pkg/logger"
+	"zuri/shared/pkg/logger"
 )
 
 // FCMService handles Firebase Cloud Messaging

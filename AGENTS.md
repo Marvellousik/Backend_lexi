@@ -1,12 +1,12 @@
-# LexiAssist — Agent Guide
+# Zuri — Agent Guide
 
-This document provides the essential context an AI coding agent needs to work effectively in the LexiAssist codebase.
+This document provides the essential context an AI coding agent needs to work effectively in the Zuri codebase.
 
 ---
 
 ## Project Overview
 
-LexiAssist is an AI-powered learning platform built as a polyglot microservices system. It provides course management, quizzes, flashcards, AI chat (Gemini), RAG-based document retrieval, text-to-speech, and real-time sync.
+Zuri is an AI-powered learning platform built as a polyglot microservices system. It provides course management, quizzes, flashcards, AI chat (Gemini), RAG-based document retrieval, text-to-speech, and real-time sync.
 
 **High-level flow:**
 ```
@@ -29,18 +29,18 @@ Client (Next.js) → API Gateway (Go, :8080) → Backend Microservices (Go/Pytho
 | Vector Search | pgvector (PostgreSQL extension) |
 
 **Key dependency files:**
-- `go.mod` / `go.sum` — Go module definition (module: `lexiassist`), Go 1.23
+- `go.mod` / `go.sum` — Go module definition (module: `zuri`), Go 1.23
 - `Frontend/package.json` — Next.js frontend dependencies
-- `lexiassist-Python Services/requirements.txt` — Shared Python dependencies for AI microservices
-- `lexiassist-ai-main/requirements.txt` — AI Monolith dependencies
-- `lexiassist-Python Services/services/<name>/requirements.txt` — Per-service Python deps (where committed)
+- `zuri-Python Services/requirements.txt` — Shared Python dependencies for AI microservices
+- `zuri-ai-main/requirements.txt` — AI Monolith dependencies
+- `zuri-Python Services/services/<name>/requirements.txt` — Per-service Python deps (where committed)
 
 ---
 
 ## Repository Layout
 
 ```
-lexi-assist/
+zuri/
 ├── services/                     # Go microservices
 │   ├── gateway/                  # API Gateway (Echo) — routing, rate limit, circuit breaker
 │   ├── user/                     # User Service (Echo) — auth, profiles, sessions
@@ -55,14 +55,14 @@ lexi-assist/
 │   ├── redis/                    # Redis client, rate limiting, pub/sub
 │   ├── logger/                   # Structured JSON logging (Zap), correlation IDs
 │   └── middleware/               # Auth middleware, request logging, CORS
-├── lexiassist-Python Services/   # Python AI microservices (FastAPI)
+├── zuri-Python Services/   # Python AI microservices (FastAPI)
 │   └── services/
 │       ├── orchestrator/         # AI Orchestrator (:5005) — Gemini chat, quiz/summary/flashcard generation
 │       ├── ingestion/            # Ingestion (:5002) — PDF parsing, chunking, embeddings
 │       ├── retrieval/            # Retrieval (:5003) — vector search (pgvector), RAG context
 │       ├── audio/                # Audio (:5004) — speech-to-text, text-to-speech
 │       └── evaluation/           # Evaluation (:5006) — quiz grading, analytics, feedback
-├── lexiassist-ai-main/           # Python AI Monolith (FastAPI, :8000)
+├── zuri-ai-main/           # Python AI Monolith (FastAPI, :8000)
 │   ├── api.py                    # Main FastAPI entry point
 │   ├── reading_assistant/        # Reading engine, TTS, job manager, routes
 │   ├── study_buddy/              # Flashcards, quizzes, routes
@@ -76,19 +76,29 @@ lexi-assist/
 │   ├── src/lib/                  # Utilities, integrations, sanitization
 │   ├── prisma/                   # Prisma schema (minimal: WaitlistEntry only)
 │   └── middleware.ts             # Next.js middleware (protected paths, AI proxy headers)
+├── docs/                         # Technical documentation hub
+│   ├── api/                      # API and service specs
+│   ├── integration/              # Frontend & mobile integration guides
+│   ├── deployment/               # Database and deployment runbooks
+│   └── demo/                     # Demo scripts
+├── tests/                        # Tests, smoke scripts & test fixtures
+│   ├── integration/              # Python integration tests
+│   ├── e2e/                      # PowerShell gateway smoke test scripts
+│   ├── fixtures/                 # Test payloads and fixtures
+│   └── scripts/                  # Standalone database & service test scripts
+├── scripts/                      # Developer utility scripts (check_syntax.py)
 ├── infra/                        # Infrastructure as Code
 │   ├── docker-compose.yml        # Full local stack (mix of build + pre-built images)
-│   ├── docker-compose-full.yml   # Full stack using root Dockerfile.user-service
+│   ├── docker-compose-full.yml   # Full stack using services/user/Dockerfile
 │   ├── docker-compose.core.yml   # Core services subset
-│   ├── migrations/               # SQL schema migrations (7 files)
-│   ├── config/                   # Config files for deployment
+│   ├── migrations/               # SQL schema migrations (001-009)
+│   │   └── supabase/             # Supabase schema variants
+│   ├── deploy/                   # Alternate deployment configs (render-supabase.yaml)
 │   └── .env.example              # Environment variable template
 ├── go.mod / go.sum               # Go module definition
 ├── Makefile                      # Build, test, migrate, lint helpers
-├── Dockerfile.test               # Test runner image (Go 1.21-alpine)
-├── Dockerfile.user-service       # Root-level user service Dockerfile (used by compose-full)
-├── check_syntax.py               # Python AST syntax checker for AI services
-└── test-gateway.ps1              # PowerShell smoke tests for the gateway
+├── render.yaml                   # Root deployment blueprint for Render
+└── README.md
 ```
 
 ---
@@ -230,10 +240,12 @@ Migration files live in `infra/migrations/`:
 ### Python Syntax Check
 
 ```bash
-python check_syntax.py
+python scripts/check_syntax.py
+# or via Makefile
+make check-syntax
 ```
 
-Validates Python AST for core AI service files under `lexiassist-Python Services/`.
+Validates Python AST for core AI service files under `zuri-Python Services/`.
 
 ---
 
@@ -284,14 +296,14 @@ services/<name>/
 - **UI Components**: Radix UI primitives wrapped in `src/components/ui/`.
 - **API**: Next.js API routes in `src/app/api/` act as proxies or BFF endpoints; external calls go to the Go gateway at `NEXT_PUBLIC_API_GATEWAY_URL` (default `http://localhost:8080`).
 - **Security headers** (CSP, X-Frame-Options, etc.) are defined in `next.config.ts`.
-- **Middleware** (`Frontend/middleware.ts`) marks protected paths and injects `x-lexi-internal-caller` for `/api/ai/*` routes. Actual JWT validation happens client-side because tokens are stored in `localStorage` via Zustand persist.
+- **Middleware** (`Frontend/middleware.ts`) marks protected paths and injects `x-zuri-internal-caller` for `/api/ai/*` routes. Actual JWT validation happens client-side because tokens are stored in `localStorage` via Zustand persist.
 - **Prisma**: The schema (`Frontend/prisma/schema.prisma`) is minimal and currently only defines `WaitlistEntry`. Most data operations go through the Go gateway, not a local Prisma client.
 
 ### Python AI Services
 
 - Each service is a standalone FastAPI app with a `main.py` entry point (AI Monolith uses `api.py`).
-- `requirements.txt` is per-service where committed. The root `lexiassist-Python Services/requirements.txt` contains shared dependencies.
-- The AI monolith (`lexiassist-ai-main/`) is a single FastAPI app (`api.py`) with sub-routers for reading, study, and writing assistants. It uses an `AIWorker` background worker and SQLAlchemy for DB access.
+- `requirements.txt` is per-service where committed. The root `zuri-Python Services/requirements.txt` contains shared dependencies.
+- The AI monolith (`zuri-ai-main/`) is a single FastAPI app (`api.py`) with sub-routers for reading, study, and writing assistants. It uses an `AIWorker` background worker and SQLAlchemy for DB access.
 - The orchestrator includes a built-in model router with cost tracking for Gemini models (`gemini-2.5-flash-lite`, `gemini-2.5-flash`, `gemini-2.5-pro`).
 
 ---
@@ -302,7 +314,7 @@ services/<name>/
 
 - **Go**: Minimal test coverage. Only `services/user/internal/service/user_service_test.go` exists. The `Makefile` only runs tests in the user service path.
 - **Frontend**: A small set of integration/unit tests exist in `src/lib/__tests__/`, `src/services/__tests__/`, and page-level `__tests__/` directories (chat, dashboard, settings, text-to-speech).
-- **E2E / Smoke**: `test-gateway.ps1` provides a PowerShell smoke test that registers a user, checks the public key endpoint, attempts login, verifies 401 on protected routes, and inspects rate-limit headers.
+- **E2E / Smoke**: `tests/e2e/test-gateway.ps1` (and `test-gateway-enhanced.ps1`) provides a PowerShell smoke test that registers a user, checks the public key endpoint, attempts login, verifies 401 on protected routes, and inspects rate-limit headers.
 
 ### How to Add Tests
 
@@ -356,8 +368,8 @@ The primary deployment target is **Docker Compose**.
 - `infra/docker-compose-full.yml` uses the root `Dockerfile.user-service` for the user service.
 - `infra/docker-compose.core.yml` provides a subset of core services.
 - Each Go service has its own `Dockerfile` inside `services/<name>/`.
-- Each Python service has its own `Dockerfile` inside `lexiassist-Python Services/services/<name>/`.
-- The AI monolith has `lexiassist-ai-main/Dockerfile`.
+- Each Python service has its own `Dockerfile` inside `zuri-Python Services/services/<name>/`.
+- The AI monolith has `zuri-ai-main/Dockerfile`.
 - Health checks are configured on every container.
 - Services restart `unless-stopped`.
 
@@ -371,7 +383,7 @@ There is no Kubernetes or Terraform configuration in this repository.
 2. **Gateway is the single entry point.** All public traffic goes through `:8080`. Never expose individual backend service ports externally in production.
 3. **Frontend rewrites** in `next.config.ts` proxy `/api/v1/*` and `/health` to the gateway. Next.js API routes in `src/app/api/` handle unmatched paths first.
 4. **Database schemas are fixed** across SQL migration files in `infra/migrations/`. If you change models, you must update the corresponding migration or create a new one.
-5. **Shared packages** in `shared/pkg/` are imported as `lexiassist/shared/pkg/<name>`. Do not duplicate auth, config, or database logic inside individual services.
+5. **Shared packages** in `shared/pkg/` are imported as `zuri/shared/pkg/<name>`. Do not duplicate auth, config, or database logic inside individual services.
 6. **Go vendor directory exists.** The project vendors Go dependencies. Running `go mod tidy` or `go mod download` will update the module cache; vendor can be refreshed with `go mod vendor` if needed.
 7. **Go version is 1.23** (per `go.mod`). The root `Dockerfile.test` uses Go 1.21-alpine, which may need updating if newer language features are used.
 8. **AI Monolith entry point is `api.py`**, not `main.py`. It registers sub-routers from `reading_assistant/`, `study_buddy/`, and `writing_assistant/`.
