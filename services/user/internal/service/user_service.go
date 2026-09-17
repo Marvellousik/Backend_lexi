@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -608,11 +609,44 @@ func (s *userService) Logout(ctx context.Context, userID string, accessTokenJTI 
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid user ID")
 	}
 
+	// Extract JTI if passed as a full JWT token
+	if strings.Contains(accessTokenJTI, ".") {
+		parser := jwt.NewParser()
+		token, _, err := parser.ParseUnverified(accessTokenJTI, &auth.Claims{})
+		if err == nil {
+			if claims, ok := token.Claims.(*auth.Claims); ok && claims.ID != "" {
+				accessTokenJTI = claims.ID
+			}
+		}
+	}
+	// Extract JTI from context if not passed
+	if accessTokenJTI == "" {
+		if jti, ok := ctx.Value("jti").(string); ok && jti != "" {
+			accessTokenJTI = jti
+		} else if tokenID, ok := ctx.Value("token_id").(string); ok && tokenID != "" {
+			accessTokenJTI = tokenID
+		} else if rawToken, ok := ctx.Value("access_token").(string); ok && rawToken != "" {
+			parser := jwt.NewParser()
+			token, _, err := parser.ParseUnverified(rawToken, &auth.Claims{})
+			if err == nil {
+				if claims, ok := token.Claims.(*auth.Claims); ok && claims.ID != "" {
+					accessTokenJTI = claims.ID
+				}
+			}
+		}
+	}
+
 	// Blacklist the access token
-	if accessTokenJTI != "" {
+	if accessTokenJTI != "" && s.redisClient != nil {
+		ttl := s.config.AccessTokenTTL
+		if ttl <= 0 {
+			ttl = 15 * time.Minute
+		}
 		blacklistKey := fmt.Sprintf("token_blacklist:%s", accessTokenJTI)
-		if err := s.redisClient.Set(ctx, blacklistKey, userID, s.config.AccessTokenTTL); err != nil {
-			logger.Error("failed to blacklist token")
+		if err := s.redisClient.Set(ctx, blacklistKey, userID, ttl); err != nil {
+			logger.Error("failed to blacklist token", zap.Error(err), zap.String("jti", accessTokenJTI))
+		} else {
+			logger.Info("blacklisted access token", zap.String("jti", accessTokenJTI), zap.String("user_id", userID), zap.Duration("ttl", ttl))
 		}
 	}
 

@@ -19,6 +19,7 @@ var (
 	ErrCourseNotFound      = errors.New("course not found")
 	ErrMaterialNotFound    = errors.New("material not found")
 	ErrQuizNotFound        = errors.New("quiz not found")
+	ErrQuestionNotFound    = errors.New("question not found")
 	ErrFlashcardNotFound   = errors.New("flashcard not found")
 	ErrUnauthorized        = errors.New("unauthorized access")
 	ErrInvalidInput        = errors.New("invalid input")
@@ -151,11 +152,13 @@ type CreateQuizRequest struct {
 }
 
 type UpdateQuizRequest struct {
-	Title            string               `json:"title,omitempty" validate:"omitempty,max=255"`
-	Description      string               `json:"description,omitempty"`
-	TimeLimitMinutes int                  `json:"time_limit_minutes,omitempty"`
+	CourseID         *uuid.UUID            `json:"course_id,omitempty"`
+	MaterialID       *uuid.UUID            `json:"material_id,omitempty"`
+	Title            string                `json:"title,omitempty" validate:"omitempty,max=255"`
+	Description      string                `json:"description,omitempty"`
+	TimeLimitMinutes int                   `json:"time_limit_minutes,omitempty"`
 	Difficulty       model.DifficultyLevel `json:"difficulty,omitempty"`
-	ShuffleQuestions *bool                `json:"shuffle_questions,omitempty"`
+	ShuffleQuestions *bool                 `json:"shuffle_questions,omitempty"`
 }
 
 type AddQuestionRequest struct {
@@ -189,8 +192,10 @@ type CreateDeckRequest struct {
 }
 
 type UpdateDeckRequest struct {
-	Title       string `json:"title,omitempty" validate:"omitempty,max=255"`
-	Description string `json:"description,omitempty"`
+	CourseID    *uuid.UUID `json:"course_id,omitempty"`
+	MaterialID  *uuid.UUID `json:"material_id,omitempty"`
+	Title       string     `json:"title,omitempty" validate:"omitempty,max=255"`
+	Description string     `json:"description,omitempty"`
 }
 
 type AddFlashcardRequest struct {
@@ -282,6 +287,13 @@ func (s *contentService) DeleteCourse(ctx context.Context, userID uuid.UUID, cou
 // ==================== Material Operations ====================
 
 func (s *contentService) CreateMaterial(ctx context.Context, userID uuid.UUID, req *CreateMaterialRequest) (*model.Material, error) {
+	// Verify course exists and belongs to user
+	if req.CourseID != nil {
+		if _, err := s.GetCourse(ctx, userID, *req.CourseID); err != nil {
+			return nil, err
+		}
+	}
+
 	material := &model.Material{
 		UserID:           userID,
 		CourseID:         req.CourseID,
@@ -332,6 +344,10 @@ func (s *contentService) UpdateMaterial(ctx context.Context, userID uuid.UUID, m
 		material.Title = req.Title
 	}
 	if req.CourseID != nil {
+		// Verify course exists and belongs to user
+		if _, err := s.GetCourse(ctx, userID, *req.CourseID); err != nil {
+			return nil, err
+		}
 		material.CourseID = req.CourseID
 	}
 	
@@ -419,6 +435,20 @@ func (s *contentService) GeneratePresignURL(ctx context.Context, userID uuid.UUI
 // ==================== Quiz Operations ====================
 
 func (s *contentService) CreateQuiz(ctx context.Context, userID uuid.UUID, req *CreateQuizRequest) (*model.Quiz, error) {
+	// Verify course exists and belongs to user
+	if req.CourseID != nil {
+		if _, err := s.GetCourse(ctx, userID, *req.CourseID); err != nil {
+			return nil, err
+		}
+	}
+
+	// Verify material exists and belongs to user
+	if req.MaterialID != nil {
+		if _, err := s.GetMaterial(ctx, userID, *req.MaterialID); err != nil {
+			return nil, err
+		}
+	}
+
 	quiz := &model.Quiz{
 		UserID:           userID,
 		CourseID:         req.CourseID,
@@ -499,6 +529,20 @@ func (s *contentService) UpdateQuiz(ctx context.Context, userID uuid.UUID, quizI
 		return nil, err
 	}
 	
+	if req.CourseID != nil {
+		// Verify course exists and belongs to user
+		if _, err := s.GetCourse(ctx, userID, *req.CourseID); err != nil {
+			return nil, err
+		}
+		quiz.CourseID = req.CourseID
+	}
+	if req.MaterialID != nil {
+		// Verify material exists and belongs to user
+		if _, err := s.GetMaterial(ctx, userID, *req.MaterialID); err != nil {
+			return nil, err
+		}
+		quiz.MaterialID = req.MaterialID
+	}
 	if req.Title != "" {
 		quiz.Title = req.Title
 	}
@@ -568,22 +612,10 @@ func (s *contentService) AddQuizQuestion(ctx context.Context, userID uuid.UUID, 
 }
 
 func (s *contentService) UpdateQuizQuestion(ctx context.Context, userID uuid.UUID, questionID uuid.UUID, req *UpdateQuestionRequest) (*model.QuizQuestion, error) {
-	// Get question and verify ownership through quiz
-	question, err := s.quizRepo.GetQuestionsByQuizID(ctx, uuid.Nil)
+	// Get question by ID
+	targetQuestion, err := s.quizRepo.GetQuestionByID(ctx, questionID)
 	if err != nil {
-		return nil, err
-	}
-	
-	// Find the specific question
-	var targetQuestion *model.QuizQuestion
-	for i := range question {
-		if question[i].ID == questionID {
-			targetQuestion = &question[i]
-			break
-		}
-	}
-	if targetQuestion == nil {
-		return nil, errors.New("question not found")
+		return nil, ErrQuestionNotFound
 	}
 	
 	// Verify quiz ownership
@@ -634,25 +666,14 @@ func (s *contentService) UpdateQuizQuestion(ctx context.Context, userID uuid.UUI
 }
 
 func (s *contentService) DeleteQuizQuestion(ctx context.Context, userID uuid.UUID, questionID uuid.UUID) error {
-	// Get question to find quiz ID
-	question, err := s.quizRepo.GetQuestionsByQuizID(ctx, uuid.Nil)
+	// Get question by ID to find quiz ID
+	targetQuestion, err := s.quizRepo.GetQuestionByID(ctx, questionID)
 	if err != nil {
-		return err
-	}
-	
-	var quizID uuid.UUID
-	for _, q := range question {
-		if q.ID == questionID {
-			quizID = q.QuizID
-			break
-		}
-	}
-	if quizID == uuid.Nil {
-		return errors.New("question not found")
+		return ErrQuestionNotFound
 	}
 	
 	// Verify quiz ownership
-	_, err = s.GetQuiz(ctx, userID, quizID)
+	_, err = s.GetQuiz(ctx, userID, targetQuestion.QuizID)
 	if err != nil {
 		return err
 	}
@@ -663,6 +684,20 @@ func (s *contentService) DeleteQuizQuestion(ctx context.Context, userID uuid.UUI
 // ==================== Flashcard Operations ====================
 
 func (s *contentService) CreateFlashcardDeck(ctx context.Context, userID uuid.UUID, req *CreateDeckRequest) (*model.FlashcardDeck, error) {
+	// Verify course exists and belongs to user
+	if req.CourseID != nil {
+		if _, err := s.GetCourse(ctx, userID, *req.CourseID); err != nil {
+			return nil, err
+		}
+	}
+
+	// Verify material exists and belongs to user
+	if req.MaterialID != nil {
+		if _, err := s.GetMaterial(ctx, userID, *req.MaterialID); err != nil {
+			return nil, err
+		}
+	}
+
 	deck := &model.FlashcardDeck{
 		UserID:      userID,
 		CourseID:    req.CourseID,
@@ -714,6 +749,20 @@ func (s *contentService) UpdateFlashcardDeck(ctx context.Context, userID uuid.UU
 		return nil, err
 	}
 	
+	if req.CourseID != nil {
+		// Verify course exists and belongs to user
+		if _, err := s.GetCourse(ctx, userID, *req.CourseID); err != nil {
+			return nil, err
+		}
+		deck.CourseID = req.CourseID
+	}
+	if req.MaterialID != nil {
+		// Verify material exists and belongs to user
+		if _, err := s.GetMaterial(ctx, userID, *req.MaterialID); err != nil {
+			return nil, err
+		}
+		deck.MaterialID = req.MaterialID
+	}
 	if req.Title != "" {
 		deck.Title = req.Title
 	}

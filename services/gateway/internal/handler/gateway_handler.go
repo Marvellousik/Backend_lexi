@@ -22,11 +22,15 @@ type GatewayHandler struct {
 }
 
 // NewGatewayHandler creates a new gateway handler.
-func NewGatewayHandler(cfg *config.Config, p *proxy.ReverseProxy, publicKey *rsa.PublicKey, rateLimiter echo.MiddlewareFunc) *GatewayHandler {
+func NewGatewayHandler(cfg *config.Config, p *proxy.ReverseProxy, publicKey *rsa.PublicKey, rateLimiter echo.MiddlewareFunc, redisClient ...middleware.RedisClient) *GatewayHandler {
+	var rc middleware.RedisClient
+	if len(redisClient) > 0 {
+		rc = redisClient[0]
+	}
 	return &GatewayHandler{
 		config:       cfg,
 		proxy:        p,
-		jwtValidator: middleware.NewJWTValidator(publicKey),
+		jwtValidator: middleware.NewJWTValidator(publicKey, rc),
 		rateLimiter:  rateLimiter,
 	}
 }

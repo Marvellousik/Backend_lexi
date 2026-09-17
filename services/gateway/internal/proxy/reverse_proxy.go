@@ -98,10 +98,22 @@ func (p *ReverseProxy) doProxyRequest(ctx context.Context, c echo.Context, targe
 		req.Header.Set("Content-Type", contentType)
 	}
 	
-	// Inject X-User-ID header if authenticated
+	// Inject X-User-ID and X-User-Role headers if authenticated
 	if injectUserID {
 		if userID := c.Get("user_id"); userID != nil {
-			req.Header.Set("X-User-ID", userID.(string))
+			if uidStr, ok := userID.(string); ok && uidStr != "" {
+				req.Header.Set("X-User-ID", uidStr)
+			}
+		}
+		if role := c.Get("role"); role != nil {
+			if roleStr, ok := role.(string); ok && roleStr != "" {
+				req.Header.Set("X-User-Role", roleStr)
+			}
+		}
+		if tokenID := c.Get("token_id"); tokenID != nil {
+			if tidStr, ok := tokenID.(string); ok && tidStr != "" {
+				req.Header.Set("X-Token-ID", tidStr)
+			}
 		}
 	}
 	
@@ -198,7 +210,7 @@ func (p *ReverseProxy) ProxyWebSocket(c echo.Context, targetURL string, injectUs
 		}
 	}
 
-	// Inject X-User-ID header if authenticated
+	// Inject X-User-ID and X-User-Role headers if authenticated
 	if injectUserID {
 		if userID := c.Get("user_id"); userID != nil {
 			headers.Set("X-User-ID", userID.(string))
@@ -210,6 +222,20 @@ func (p *ReverseProxy) ProxyWebSocket(c echo.Context, targetURL string, injectUs
 			logger.Warn("[WS] injectUserID=true but user_id not found in context",
 				zap.String("correlation_id", correlationID),
 			)
+		}
+		if role := c.Get("role"); role != nil {
+			if roleStr, ok := role.(string); ok && roleStr != "" {
+				headers.Set("X-User-Role", roleStr)
+				logger.Debug("[WS] injected X-User-Role",
+					zap.String("role", roleStr),
+					zap.String("correlation_id", correlationID),
+				)
+			}
+		}
+		if tokenID := c.Get("token_id"); tokenID != nil {
+			if tidStr, ok := tokenID.(string); ok && tidStr != "" {
+				headers.Set("X-Token-ID", tidStr)
+			}
 		}
 	}
 

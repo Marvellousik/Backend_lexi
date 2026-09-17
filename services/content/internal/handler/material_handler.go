@@ -46,6 +46,12 @@ func (h *MaterialHandler) CreateMaterial(c echo.Context) error {
 
 	material, err := h.service.CreateMaterial(c.Request().Context(), userID, &req)
 	if err != nil {
+		if err == service.ErrCourseNotFound {
+			return echo.NewHTTPError(http.StatusNotFound, "course not found")
+		}
+		if err == service.ErrUnauthorized {
+			return echo.NewHTTPError(http.StatusForbidden, "access denied")
+		}
 		logger.Error("failed to create material", zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create material")
 	}
@@ -158,6 +164,9 @@ func (h *MaterialHandler) UpdateMaterial(c echo.Context) error {
 	if err != nil {
 		if err == service.ErrMaterialNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "material not found")
+		}
+		if err == service.ErrCourseNotFound {
+			return echo.NewHTTPError(http.StatusNotFound, "course not found")
 		}
 		if err == service.ErrUnauthorized {
 			return echo.NewHTTPError(http.StatusForbidden, "access denied")

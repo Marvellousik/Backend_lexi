@@ -101,7 +101,7 @@ func main() {
 	e.Use(loggerMiddleware())
 	
 	// Register routes
-	gatewayHandler := handler.NewGatewayHandler(cfg, reverseProxy, publicKey, rateLimiter)
+	gatewayHandler := handler.NewGatewayHandler(cfg, reverseProxy, publicKey, rateLimiter, redisClient)
 	gatewayHandler.RegisterRoutes(e)
 	
 	// Start server
