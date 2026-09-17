@@ -3,7 +3,9 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/rsa"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -758,9 +760,11 @@ func (s *userService) RequestPasswordReset(ctx context.Context, email string) er
 
 	// Generate reset token
 	resetTokenBytes := make([]byte, 32)
-	// In production, use crypto/rand
-	// For simplicity, using timestamp-based generation here
-	resetToken := auth.HashRefreshToken(string(resetTokenBytes))
+	if _, err := rand.Read(resetTokenBytes); err != nil {
+		logger.Error("failed to generate random reset token", zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to generate reset token")
+	}
+	resetToken := hex.EncodeToString(resetTokenBytes)
 	
 	passwordReset := &model.PasswordReset{
 		UserID:    user.ID,
