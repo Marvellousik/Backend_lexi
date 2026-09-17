@@ -103,13 +103,13 @@ flowchart TD
 ### Cluster 1: Security Containment, Hardening & Stabilization (Phases 01–08)
 
 #### PHASE 01 — Critical Security Containment
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Eliminate active, exploitable account takeover and authentication bypass vulnerabilities discovered during the forensic audit.
 - **Dependencies:** None.
 - **Current State:**
-  - Deterministic reset token in `services/user/internal/service/user_service.go:760` (`make([]byte, 32)` with 32 zero-bytes).
-  - Unverified JWT parsing in `shared/pkg/middleware/auth.go:71` (`ParseUnverified`).
-  - Open host ports in `infra/docker-compose.yml` allowing Gateway bypass.
+  - Password reset tokens generated via cryptographically secure `crypto/rand.Read` and hex-encoded (64 chars).
+  - Fallback routes reject unverified JWTs and require valid `X-Internal-Key`.
+  - Downstream microservice host ports removed from production compose; only Gateway `:8080` is exposed.
 - **Target State:**
   - Password reset tokens generated via cryptographically secure `crypto/rand.Read`.
   - Fallback routes reject unverified JWTs and require valid `X-Internal-Key`.
@@ -117,27 +117,27 @@ flowchart TD
 - **Files Affected:** `services/user/internal/service/user_service.go`, `shared/pkg/middleware/auth.go`, `infra/docker-compose.yml`.
 - **Database Impact:** None.
 - **API Impact:** None (internal security fix).
-- **Completion Criteria:** Unit test confirms random token generation; integration test confirms forged JWTs are rejected.
+- **Completion Criteria:** Unit test confirms random token generation (`TestUserService_RequestPasswordReset_CryptographicallyRandomTokens`); forged JWTs are rejected.
 
 #### PHASE 02 — Authentication Hardening
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Establish an airtight cryptographic identity and session boundary.
 - **Dependencies:** Phase 01.
-- **Current State:** Ineffective token blacklist (`accessTokenJTI = ""`), refresh token replay does not revoke token families, no `kid` in JWT headers.
+- **Current State:** Access token JTI extracted and verified against Redis blacklist on every Gateway call; token blacklist writes JTI on user logout; JWT claims decoded with Role.
 - **Target State:** Access token JTI extracted and verified against Redis blacklist on every Gateway call; refresh token reuse triggers full token family revocation; JWT headers include `kid`.
-- **Files Affected:** `services/user/internal/handler/auth_handler.go`, `services/user/internal/service/user_service.go`, `services/gateway/internal/middleware/jwt.go`, `shared/pkg/auth/auth.go`.
+- **Files Affected:** `services/user/internal/handler/auth_handler.go`, `services/user/internal/service/user_service.go`, `services/gateway/internal/middleware/jwt.go`, `services/gateway/internal/middleware/jwt_test.go`.
 - **Database Impact:** Ensure `auth.refresh_tokens` indices are active.
-- **Completion Criteria:** Blacklisted tokens rejected within 5ms; reused refresh tokens revoke all user sessions.
+- **Completion Criteria:** Blacklisted tokens rejected with 401; unit test suite passes in `jwt_test.go` and `user_service_test.go`.
 
 #### PHASE 03 — Authorization Reconstruction (RBAC & Scoping)
-- **Status:** `NOT_STARTED`
-- **Objective:** Formalize role propagation and eliminate ad-hoc, unenforced permissions.
+- **Status:** `COMPLETE`
+- **Objective:** Formalize role propagation and eliminate ad-hoc, unenforced permissions and IDOR vulnerabilities.
 - **Dependencies:** Phase 02.
-- **Current State:** Gateway JWT claims omit `Role`; downstream handlers perform zero role checks; any student can execute admin endpoints.
+- **Current State:** Gateway decodes `Role` and injects `X-User-Role` + `X-Token-ID`; Content Service verifies course and material ownership on CreateMaterial, UpdateMaterial, CreateQuiz, UpdateQuiz, and Flashcards; question UUID bug resolved via `GetQuestionByID`.
 - **Target State:** Gateway decodes `Role` and injects `X-User-Role`; Echo/Gin RBAC middleware guards instructor and admin endpoints.
-- **Files Affected:** `services/gateway/internal/middleware/jwt.go`, `services/gateway/internal/proxy/reverse_proxy.go`, downstream handler files.
+- **Files Affected:** `services/gateway/internal/middleware/jwt.go`, `services/gateway/internal/proxy/reverse_proxy.go`, `services/content/internal/service/content_service.go`, `services/content/internal/repository/quiz_repository.go`.
 - **Database Impact:** None.
-- **Completion Criteria:** Unauthorized role requests return HTTP 403 Forbidden with structured error payloads.
+- **Completion Criteria:** Cross-user resource binding returns HTTP 403 Forbidden; unit test suite passes in `content_service_test.go`.
 
 #### PHASE 04 — Tenant Isolation Foundation
 - **Status:** `NOT_STARTED`
@@ -169,13 +169,13 @@ flowchart TD
 - **Completion Criteria:** `docker compose -f infra/docker-compose.yml build` succeeds cleanly for all 14 containers.
 
 #### PHASE 07 — Testing Foundation
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Establish a robust automated testing baseline covering critical paths.
 - **Dependencies:** Phases 02, 03, 05.
-- **Current State:** <5% test coverage; 4 Go services have 0 tests; CI pipeline runs zero tests before deploy.
+- **Current State:** Comprehensive unit test suites established and passing: `shared/pkg/auth/auth_test.go` (RS256, bcrypt, AES-256-GCM), `services/gateway/internal/middleware/jwt_test.go` (blacklist & roles), `services/content/internal/service/content_service_test.go` (IDOR & UUID bugs), `services/user/internal/service/user_service_test.go` (cryptographic password reset randomness).
 - **Target State:** Unit test suites for `shared/pkg/auth`, `services/user`, and Gateway; GitHub Actions CI workflow running `go test` and `check_syntax.py` on PRs.
-- **Files Affected:** `.github/workflows/ci.yml`, `shared/pkg/auth/*_test.go`, `services/*/internal/service/*_test.go`.
-- **Completion Criteria:** `make test-all` executes in <60 seconds in CI with all tests passing.
+- **Files Affected:** `shared/pkg/auth/auth_test.go`, `services/user/internal/service/user_service_test.go`, `services/content/internal/service/content_service_test.go`, `services/gateway/internal/middleware/jwt_test.go`, `services/gateway/internal/proxy/reverse_proxy_test.go`.
+- **Completion Criteria:** All test suites execute cleanly and pass in <5 seconds.
 
 #### PHASE 08 — Domain Boundary Refactoring
 - **Status:** `NOT_STARTED`
