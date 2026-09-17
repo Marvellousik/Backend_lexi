@@ -48,3 +48,5 @@ lexiassist-ai-main/reading_assistant/temp_audio/
 lexiassist-Python Services/services/ingestion/*.json
 lexiassist-Python Services/services/ingestion/extracted_text.txt
 login.json
+
+.zuri/

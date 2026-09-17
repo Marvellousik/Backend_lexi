@@ -8,9 +8,7 @@ import (
 	
 	"github.com/labstack/echo/v4"
 	
-	"lexiassist/services/gateway/internal/clients"
 	"lexiassist/services/gateway/internal/config"
-	"lexiassist/services/gateway/internal/handlers"
 	"lexiassist/services/gateway/internal/middleware"
 	"lexiassist/services/gateway/internal/proxy"
 )
@@ -20,20 +18,15 @@ type GatewayHandler struct {
 	config        *config.Config
 	proxy         *proxy.ReverseProxy
 	jwtValidator  *middleware.JWTValidator
-	aiHandler     *handlers.AIHandler
 	rateLimiter   echo.MiddlewareFunc
 }
 
 // NewGatewayHandler creates a new gateway handler.
 func NewGatewayHandler(cfg *config.Config, p *proxy.ReverseProxy, publicKey *rsa.PublicKey, rateLimiter echo.MiddlewareFunc) *GatewayHandler {
-	// Initialize AI client
-	aiClient := clients.NewAIClient(cfg)
-	
 	return &GatewayHandler{
 		config:       cfg,
 		proxy:        p,
 		jwtValidator: middleware.NewJWTValidator(publicKey),
-		aiHandler:    handlers.NewAIHandler(aiClient),
 		rateLimiter:  rateLimiter,
 	}
 }
@@ -70,7 +63,6 @@ func (h *GatewayHandler) RegisterRoutes(e *echo.Echo) {
 			"/api/v1/auth/forgot-password",
 			"/api/v1/auth/reset-password",
 			"/api/v1/auth/public-key",
-			"/api/v1/ai/languages",
 		}),
 	))
 	protected.Use(h.rateLimiter)
@@ -98,7 +90,6 @@ func (h *GatewayHandler) RegisterRoutes(e *echo.Echo) {
 		protected.DELETE("/materials/:id", h.ProxyToContentService)
 		protected.POST("/materials/:id/presign", h.ProxyToContentService)
 		protected.POST("/webhooks/material-uploaded", h.ProxyToContentService)
-		protected.POST("/process-from-storage", h.ProxyToIngestionService)
 		
 		// Quizzes
 		protected.GET("/quizzes", h.ProxyToContentService)
@@ -133,38 +124,35 @@ func (h *GatewayHandler) RegisterRoutes(e *echo.Echo) {
 		protected.POST("/quiz-attempts/:id/answers", h.ProxyToAnalyticsService)
 		protected.POST("/quiz-attempts/:id/complete", h.ProxyToAnalyticsService)
 		
-		// AI Orchestrator (with circuit breaker)
-		protected.POST("/ai/generate/quiz", h.ProxyToAIOrchestrator)
-		protected.POST("/ai/generate/summary", h.ProxyToAIOrchestrator)
-		protected.POST("/ai/generate/flashcards", h.ProxyToAIOrchestrator)
-		protected.POST("/ai/chat", h.ProxyToAIOrchestrator)
-		protected.GET("/ai/conversation/:id", h.ProxyToAIOrchestrator)
-		protected.DELETE("/ai/conversation/:id", h.ProxyToAIOrchestrator)
+		// Academic Service (Phase 1-4 Endpoints)
+		protected.GET("/academic/courses", h.ProxyToAcademicService)
+		protected.GET("/academic/courses/:id", h.ProxyToAcademicService)
+		protected.POST("/academic/courses/enroll", h.ProxyToAcademicService)
+		protected.GET("/academic/timetable", h.ProxyToAcademicService)
+		protected.GET("/academic/timetable/next", h.ProxyToAcademicService)
+		protected.POST("/academic/timetable/slots", h.ProxyToAcademicService)
+		protected.GET("/academic/context-gaps", h.ProxyToAcademicService)
+		protected.POST("/academic/context-gaps/:id/resolve", h.ProxyToAcademicService)
+		protected.POST("/academic/learning-signals", h.ProxyToAcademicService)
+		protected.GET("/academic/courses/:id/knowledge-state", h.ProxyToAcademicService)
+		protected.GET("/academic/courses/:id/weak-topics", h.ProxyToAcademicService)
+		protected.GET("/academic/courses/:id/lecturer-signals", h.ProxyToAcademicService)
+		protected.POST("/academic/courses/:id/partner/chat", h.ProxyToAcademicService)
+		protected.GET("/academic/courses/:id/partner/history", h.ProxyToAcademicService)
+		protected.GET("/academic/today", h.ProxyToAcademicService)
+		protected.POST("/academic/today/interventions/:id/act", h.ProxyToAcademicService)
+		protected.POST("/academic/today/interventions/:id/dismiss", h.ProxyToAcademicService)
+		protected.POST("/academic/today/events/dispatch", h.ProxyToAcademicService)
+		protected.POST("/academic/today/events/notify", h.ProxyToAcademicService)
+		protected.POST("/academic/courses/:id/lectures/:lecture_id/ingest", h.ProxyToAcademicService)
 		
-		// AI Monolith Service (port 8000) - Writing Assistant
-		protected.POST("/writing/transcribe", h.aiHandler.Transcribe)
-		protected.POST("/writing/notes", h.aiHandler.GenerateNotes)
-		protected.GET("/writing/history", h.aiHandler.GetNotesHistory)
-		protected.GET("/writing/notes/:id", h.aiHandler.GetNotesSession)
-		
-		// AI Monolith Service - Reading Assistant
-		protected.POST("/reading/analyse", h.aiHandler.AnalyzeDocument)
-		protected.GET("/reading/:id", h.aiHandler.GetReadingSession)
-		
-		// AI Monolith Service - Study Assistant
-		protected.POST("/study/flashcards", h.aiHandler.GenerateFlashcards)
-		protected.POST("/study/quiz", h.aiHandler.GenerateQuiz)
-		protected.GET("/study/history", h.aiHandler.GetStudyHistory)
-		protected.GET("/study/flashcards/:id", h.aiHandler.GetFlashcardSession)
-		protected.GET("/study/quiz/:id", h.aiHandler.GetQuizSession)
-		
-		// Retrieval Service
-		protected.POST("/ai/retrieve", h.ProxyToRetrievalService)
-		
-		// Audio Service
-		protected.POST("/ai/speech-to-text", h.ProxyToAudioService)
-		protected.POST("/ai/text-to-speech", h.ProxyToAudioService)
-		protected.GET("/ai/languages", h.ProxyToAudioService)
+		// AI Service (Control Plane, 13-stage Pipeline & Async Jobs)
+		protected.POST("/ai/execute", h.ProxyToAIService)
+		protected.POST("/ai/execute/stream", h.ProxyToAIService)
+		protected.POST("/ai/jobs", h.ProxyToAIService)
+		protected.GET("/ai/jobs/:id", h.ProxyToAIService)
+		protected.POST("/ai/jobs/:id/cancel", h.ProxyToAIService)
+		protected.GET("/ai/analytics/costs", h.ProxyToAIService)
 		
 		// Notification Service
 		protected.GET("/notifications/preferences", h.ProxyToNotificationService)
@@ -208,6 +196,7 @@ func (h *GatewayHandler) HealthCheck(c echo.Context) error {
 		"analytics":    h.config.AnalyticsServiceURL,
 		"notification": h.config.NotificationServiceURL,
 		"sync":         h.config.SyncServiceURL,
+		"academic":     h.config.AcademicServiceURL,
 		"ai":           h.config.AIServiceURL,
 	}
 	
@@ -249,9 +238,15 @@ func (h *GatewayHandler) ProxyToAnalyticsService(c echo.Context) error {
 	return h.proxy.ProxyRequest(c, targetURL, "analytics", true)
 }
 
-// ProxyToAIOrchestrator proxies to AI Orchestrator with circuit breaker.
-func (h *GatewayHandler) ProxyToAIOrchestrator(c echo.Context) error {
-	targetURL := h.config.AIOrchestratorURL
+// ProxyToAcademicService proxies to Academic Service.
+func (h *GatewayHandler) ProxyToAcademicService(c echo.Context) error {
+	targetURL := h.config.AcademicServiceURL
+	return h.proxy.ProxyRequest(c, targetURL, "academic", true)
+}
+
+// ProxyToAIService proxies to AI Service with circuit breaker.
+func (h *GatewayHandler) ProxyToAIService(c echo.Context) error {
+	targetURL := h.config.AIServiceURL
 	return h.proxy.ProxyRequest(c, targetURL, "ai", true)
 }
 
@@ -267,27 +262,8 @@ func (h *GatewayHandler) ProxyToSyncService(c echo.Context) error {
 	return h.proxy.ProxyRequest(c, targetURL, "sync", true)
 }
 
-// ProxyToRetrievalService proxies to Retrieval Service.
-func (h *GatewayHandler) ProxyToRetrievalService(c echo.Context) error {
-	targetURL := h.config.RetrievalServiceURL
-	return h.proxy.ProxyRequest(c, targetURL, "retrieval", true)
-}
-
-// ProxyToAudioService proxies to Audio Service.
-func (h *GatewayHandler) ProxyToAudioService(c echo.Context) error {
-	targetURL := h.config.AudioServiceURL
-	return h.proxy.ProxyRequest(c, targetURL, "audio", true)
-}
-
-// ProxyToIngestionService proxies to Ingestion Service.
-func (h *GatewayHandler) ProxyToIngestionService(c echo.Context) error {
-	targetURL := h.config.IngestionServiceURL
-	return h.proxy.ProxyRequest(c, targetURL, "ingestion", false)
-}
-
 // ProxyWebSocketToSyncService proxies WebSocket connections to Sync Service.
 func (h *GatewayHandler) ProxyWebSocketToSyncService(c echo.Context) error {
 	targetURL := h.config.SyncServiceURL
-	// Use dedicated WebSocket proxy to handle upgrade framing
 	return h.proxy.ProxyWebSocket(c, targetURL+"/api/v1/sync", true)
 }
