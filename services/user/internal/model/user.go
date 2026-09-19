@@ -27,6 +27,7 @@ type User struct {
 	VerificationCodeExpiresAt *time.Time `json:"-"`
 	IsActive             bool           `gorm:"default:true" json:"is_active"`
 	Role                 string         `gorm:"type:varchar(20);default:'student'" json:"role"`
+	InstitutionID        string         `gorm:"type:varchar(255);index" json:"institution_id,omitempty"`
 	CreatedAt            time.Time      `json:"created_at"`
 	UpdatedAt            time.Time      `json:"updated_at"`
 	DeletedAt            gorm.DeletedAt `gorm:"index" json:"-"`

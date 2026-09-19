@@ -36,10 +36,11 @@ type JWTValidator struct {
 
 // Claims represents JWT claims.
 type Claims struct {
-	UserID    string `json:"user_id"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	TokenType string `json:"token_type"`
+	UserID        string `json:"user_id"`
+	Email         string `json:"email"`
+	Role          string `json:"role"`
+	TokenType     string `json:"token_type"`
+	InstitutionID string `json:"institution_id,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -169,6 +170,7 @@ func JWTMiddleware(validator *JWTValidator, skipper func(echo.Context) bool) ech
 			c.Set("email", claims.Email)
 			c.Set("role", claims.Role)
 			c.Set("token_id", claims.ID)
+			c.Set("institution_id", claims.InstitutionID)
 			c.Set("claims", claims)
 			
 			return next(c)

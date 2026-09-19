@@ -494,11 +494,12 @@ func (s *userService) Login(ctx context.Context, req *LoginRequest, clientInfo *
 
 // createTokenPair creates a new access and refresh token pair.
 func (s *userService) createTokenPair(ctx context.Context, user *model.User, clientInfo *ClientInfo) (*TokenResponse, error) {
-	// Generate tokens with role
-	tokenPair, err := s.jwtManager.GenerateTokenPair(
+	// Generate tokens with role and tenant institution ID
+	tokenPair, err := s.jwtManager.GenerateTenantTokenPair(
 		user.ID.String(),
 		user.Email,
 		user.Role,
+		user.InstitutionID,
 		s.config.AccessTokenTTL,
 		s.config.RefreshTokenTTL,
 	)

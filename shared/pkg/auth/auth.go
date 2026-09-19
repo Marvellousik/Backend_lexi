@@ -34,10 +34,11 @@ var (
 
 // Claims represents JWT claims.
 type Claims struct {
-	UserID    string `json:"user_id"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	TokenType string `json:"token_type"`
+	UserID        string `json:"user_id"`
+	Email         string `json:"email"`
+	Role          string `json:"role"`
+	TokenType     string `json:"token_type"`
+	InstitutionID string `json:"institution_id,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -75,14 +76,20 @@ func NewJWTManagerWithPublicKeyOnly(publicKey *rsa.PublicKey) *JWTManager {
 
 // GenerateTokenPair generates a new access and refresh token pair.
 func (m *JWTManager) GenerateTokenPair(userID, email, role string, accessTTL, refreshTTL time.Duration) (*TokenPair, error) {
+	return m.GenerateTenantTokenPair(userID, email, role, "", accessTTL, refreshTTL)
+}
+
+// GenerateTenantTokenPair generates a new access and refresh token pair with institution tenant ID.
+func (m *JWTManager) GenerateTenantTokenPair(userID, email, role, institutionID string, accessTTL, refreshTTL time.Duration) (*TokenPair, error) {
 	now := time.Now()
 
 	// Generate access token
 	accessClaims := Claims{
-		UserID:    userID,
-		Email:     email,
-		Role:      role,
-		TokenType: "access",
+		UserID:        userID,
+		Email:         email,
+		Role:          role,
+		TokenType:     "access",
+		InstitutionID: institutionID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(accessTTL)),
 			IssuedAt:  jwt.NewNumericDate(now),
@@ -336,3 +343,15 @@ func UserIDFromContext(ctx context.Context) (string, bool) {
 func WithUserID(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, "user_id", userID)
 }
+
+// InstitutionIDFromContext extracts institution ID from context.
+func InstitutionIDFromContext(ctx context.Context) (string, bool) {
+	instID, ok := ctx.Value("institution_id").(string)
+	return instID, ok
+}
+
+// WithInstitutionID adds institution ID to context.
+func WithInstitutionID(ctx context.Context, institutionID string) context.Context {
+	return context.WithValue(ctx, "institution_id", institutionID)
+}
+

@@ -305,3 +305,27 @@ func TestVerificationCode_LengthAndEntropy(t *testing.T) {
 	// With 50 random 6-digit codes, we expect good entropy (at least 45 unique codes)
 	assert.GreaterOrEqual(t, len(codes), 45, "Verification codes should have sufficient randomness")
 }
+
+func TestTenantRS256Token_InstitutionScoping(t *testing.T) {
+	privKey, pubKey, err := auth.GenerateRSAKeyPair(2048)
+	require.NoError(t, err)
+
+	jwtManager := auth.NewJWTManager(privKey, pubKey)
+	userID := "usr_student_01"
+	email := "student@veritas.edu"
+	role := "student"
+	institutionID := "inst_veritas_abuja"
+
+	tokenPair, err := jwtManager.GenerateTenantTokenPair(userID, email, role, institutionID, 15*time.Minute, 24*time.Hour)
+	require.NoError(t, err)
+	require.NotNil(t, tokenPair)
+
+	claims, err := jwtManager.ValidateToken(tokenPair.AccessToken)
+	require.NoError(t, err)
+	require.NotNil(t, claims)
+
+	assert.Equal(t, userID, claims.UserID)
+	assert.Equal(t, email, claims.Email)
+	assert.Equal(t, role, claims.Role)
+	assert.Equal(t, institutionID, claims.InstitutionID)
+}

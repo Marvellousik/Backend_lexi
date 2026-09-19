@@ -115,6 +115,11 @@ func (p *ReverseProxy) doProxyRequest(ctx context.Context, c echo.Context, targe
 				req.Header.Set("X-Token-ID", tidStr)
 			}
 		}
+		if instID := c.Get("institution_id"); instID != nil {
+			if instIDStr, ok := instID.(string); ok && instIDStr != "" {
+				req.Header.Set("X-Institution-ID", instIDStr)
+			}
+		}
 	}
 	
 	// Forward correlation ID
@@ -235,6 +240,11 @@ func (p *ReverseProxy) ProxyWebSocket(c echo.Context, targetURL string, injectUs
 		if tokenID := c.Get("token_id"); tokenID != nil {
 			if tidStr, ok := tokenID.(string); ok && tidStr != "" {
 				headers.Set("X-Token-ID", tidStr)
+			}
+		}
+		if instID := c.Get("institution_id"); instID != nil {
+			if instIDStr, ok := instID.(string); ok && instIDStr != "" {
+				headers.Set("X-Institution-ID", instIDStr)
 			}
 		}
 	}

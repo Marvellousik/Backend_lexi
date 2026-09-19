@@ -53,6 +53,7 @@ func TestProxyWebSocket(t *testing.T) {
 		c.Set("user_id", "test-user-123")
 		c.Set("role", "student")
 		c.Set("token_id", "test-jti-abc")
+		c.Set("institution_id", "inst-veritas-01")
 		return p.ProxyWebSocket(c, upstreamServer.URL, true)
 	})
 
@@ -90,6 +91,7 @@ func TestProxyWebSocket(t *testing.T) {
 	assert.Equal(t, "test-user-123", upstreamReceivedHeaders.Get("X-User-ID"))
 	assert.Equal(t, "student", upstreamReceivedHeaders.Get("X-User-Role"))
 	assert.Equal(t, "test-jti-abc", upstreamReceivedHeaders.Get("X-Token-ID"))
+	assert.Equal(t, "inst-veritas-01", upstreamReceivedHeaders.Get("X-Institution-ID"))
 	assert.Equal(t, "test-internal-key", upstreamReceivedHeaders.Get("X-Internal-Key"))
 }
 
@@ -112,6 +114,7 @@ func TestProxyRequest_InjectRoleAndTokenHeaders(t *testing.T) {
 	c.Set("user_id", "usr-456")
 	c.Set("role", "instructor")
 	c.Set("token_id", "tok-jti-789")
+	c.Set("institution_id", "inst-veritas-01")
 
 	err := p.ProxyRequest(c, upstreamServer.URL, "test-service", true)
 	require.NoError(t, err)
@@ -119,5 +122,6 @@ func TestProxyRequest_InjectRoleAndTokenHeaders(t *testing.T) {
 	assert.Equal(t, "usr-456", upstreamHeaders.Get("X-User-ID"))
 	assert.Equal(t, "instructor", upstreamHeaders.Get("X-User-Role"))
 	assert.Equal(t, "tok-jti-789", upstreamHeaders.Get("X-Token-ID"))
+	assert.Equal(t, "inst-veritas-01", upstreamHeaders.Get("X-Institution-ID"))
 	assert.Equal(t, "test-internal-key", upstreamHeaders.Get("X-Internal-Key"))
 }

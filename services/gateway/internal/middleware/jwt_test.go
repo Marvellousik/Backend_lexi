@@ -31,13 +31,14 @@ func generateTestRSAKey(t *testing.T) (*rsa.PrivateKey, *rsa.PublicKey) {
 	return privKey, &privKey.PublicKey
 }
 
-func createTestToken(t *testing.T, privKey *rsa.PrivateKey, jti, userID, email, role, tokenType string, exp time.Duration) string {
+func createTestToken(t *testing.T, privKey *rsa.PrivateKey, jti, userID, email, role, tokenType, institutionID string, exp time.Duration) string {
 	now := time.Now()
 	claims := middleware.Claims{
-		UserID:    userID,
-		Email:     email,
-		Role:      role,
-		TokenType: tokenType,
+		UserID:        userID,
+		Email:         email,
+		Role:          role,
+		TokenType:     tokenType,
+		InstitutionID: institutionID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        jti,
 			Subject:   userID,
@@ -55,36 +56,42 @@ func TestJWTMiddleware_RoleClaimsAndBlacklist(t *testing.T) {
 	privKey, pubKey := generateTestRSAKey(t)
 
 	tests := []struct {
-		name               string
-		jti                string
-		role               string
-		blacklistedKeys    []string
-		expectedStatusCode int
-		expectedRole       string
-		expectedTokenID    string
+		name                  string
+		jti                   string
+		role                  string
+		institutionID         string
+		blacklistedKeys       []string
+		expectedStatusCode    int
+		expectedRole          string
+		expectedTokenID       string
+		expectedInstitutionID string
 	}{
 		{
-			name:               "valid token sets role and token_id",
-			jti:                "jti-valid-123",
-			role:               "instructor",
-			blacklistedKeys:    nil,
-			expectedStatusCode: http.StatusOK,
-			expectedRole:       "instructor",
-			expectedTokenID:    "jti-valid-123",
+			name:                  "valid token sets role, token_id, and institution_id",
+			jti:                   "jti-valid-123",
+			role:                  "instructor",
+			institutionID:         "inst-veritas-01",
+			blacklistedKeys:       nil,
+			expectedStatusCode:    http.StatusOK,
+			expectedRole:          "instructor",
+			expectedTokenID:       "jti-valid-123",
+			expectedInstitutionID: "inst-veritas-01",
 		},
 		{
-			name:               "token blacklisted via token_blacklist:<jti>",
-			jti:                "jti-revoked-token-blacklist",
-			role:               "student",
-			blacklistedKeys:    []string{"token_blacklist:jti-revoked-token-blacklist"},
-			expectedStatusCode: http.StatusUnauthorized,
+			name:                  "token blacklisted via token_blacklist:<jti>",
+			jti:                   "jti-revoked-token-blacklist",
+			role:                  "student",
+			institutionID:         "inst-veritas-01",
+			blacklistedKeys:       []string{"token_blacklist:jti-revoked-token-blacklist"},
+			expectedStatusCode:    http.StatusUnauthorized,
 		},
 		{
-			name:               "token blacklisted via blacklist:<jti>",
-			jti:                "jti-revoked-blacklist",
-			role:               "admin",
-			blacklistedKeys:    []string{"blacklist:jti-revoked-blacklist"},
-			expectedStatusCode: http.StatusUnauthorized,
+			name:                  "token blacklisted via blacklist:<jti>",
+			jti:                   "jti-revoked-blacklist",
+			role:                  "admin",
+			institutionID:         "",
+			blacklistedKeys:       []string{"blacklist:jti-revoked-blacklist"},
+			expectedStatusCode:    http.StatusUnauthorized,
 		},
 	}
 
@@ -98,7 +105,7 @@ func TestJWTMiddleware_RoleClaimsAndBlacklist(t *testing.T) {
 			validator := middleware.NewJWTValidator(pubKey, redisMock)
 			mw := middleware.JWTMiddleware(validator, nil)
 
-			tokenStr := createTestToken(t, privKey, tt.jti, "user-abc", "user@example.com", tt.role, "access", time.Hour)
+			tokenStr := createTestToken(t, privKey, tt.jti, "user-abc", "user@example.com", tt.role, "access", tt.institutionID, time.Hour)
 
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, "/protected", nil)
@@ -106,10 +113,13 @@ func TestJWTMiddleware_RoleClaimsAndBlacklist(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			var capturedRole, capturedTokenID string
+			var capturedRole, capturedTokenID, capturedInstID string
 			handler := mw(func(ctx echo.Context) error {
 				capturedRole = ctx.Get("role").(string)
 				capturedTokenID = ctx.Get("token_id").(string)
+				if inst := ctx.Get("institution_id"); inst != nil {
+					capturedInstID = inst.(string)
+				}
 				return ctx.String(http.StatusOK, "success")
 			})
 
@@ -119,6 +129,7 @@ func TestJWTMiddleware_RoleClaimsAndBlacklist(t *testing.T) {
 				assert.Equal(t, http.StatusOK, rec.Code)
 				assert.Equal(t, tt.expectedRole, capturedRole)
 				assert.Equal(t, tt.expectedTokenID, capturedTokenID)
+				assert.Equal(t, tt.expectedInstitutionID, capturedInstID)
 			} else {
 				require.Error(t, err)
 				httpErr, ok := err.(*echo.HTTPError)
