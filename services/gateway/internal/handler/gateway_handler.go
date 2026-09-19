@@ -79,6 +79,9 @@ func (h *GatewayHandler) RegisterRoutes(e *echo.Echo) {
 		protected.POST("/users/me/change-password", h.ProxyToUserService)
 		protected.GET("/users/me/sessions", h.ProxyToUserService)
 		protected.DELETE("/users/me/sessions/:id", h.ProxyToUserService)
+		protected.GET("/users/me/memberships", h.ProxyToUserService)
+		protected.POST("/users/me/memberships", h.ProxyToUserService)
+		protected.POST("/users/me/switch-institution", h.ProxyToUserService)
 		
 		// Content Service
 		protected.GET("/courses", h.ProxyToContentService)

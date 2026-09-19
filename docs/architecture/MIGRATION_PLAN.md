@@ -191,12 +191,14 @@ flowchart TD
 ### Cluster 2: Institutional & Academic Domain Model (Phases 09–13)
 
 #### PHASE 09 — Identity & Membership Domain
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Separate user identity from institutional membership (`User → Membership → Institution → Role`).
 - **Dependencies:** Phase 08.
+- **Current State:** `zuri_auth.institution_memberships`, `zuri_auth.roles`, `zuri_auth.permissions`, and `zuri_auth.role_permissions` created with backward-compatible views in `auth`; User Service provides `ListMemberships`, `AddMembership`, and `SwitchActiveInstitution` with instant token re-issuance; Gateway exposes `/api/v1/users/me/memberships` and `/api/v1/users/me/switch-institution`; unit test suite verified (`TestUserService_InstitutionMembership`).
 - **Target State:** Users can hold multiple memberships across universities with independent role assignments.
-- **Database Impact:** Create `zuri_auth.institution_memberships`, `zuri_auth.roles`, `zuri_auth.permissions`.
-- **Completion Criteria:** A single user can switch between student and lecturer contexts across institutions.
+- **Files Affected:** `infra/migrations/011_create_institution_memberships.sql`, `infra/migrations/supabase/011_create_institution_memberships_zuri.sql`, `services/user/internal/model/user.go`, `services/user/internal/repository/membership_repository.go`, `services/user/internal/repository/mock_repository.go`, `services/user/internal/service/user_service.go`, `services/user/internal/service/user_service_test.go`, `services/user/internal/handler/user_handler.go`, `services/user/cmd/main.go`, `services/gateway/internal/handler/gateway_handler.go`.
+- **Database Impact:** Created `zuri_auth.roles`, `zuri_auth.permissions`, `zuri_auth.role_permissions`, `zuri_auth.institution_memberships` with backward-compatible views.
+- **Completion Criteria:** A single user can switch between student and lecturer contexts across institutions with active tenant JWT renewal. Unit tests pass cleanly.
 
 #### PHASE 10 — Institution & Campus Domain
 - **Status:** `NOT_STARTED`

@@ -94,6 +94,7 @@ func main() {
 	sessionRepo := repository.NewSessionRepository(db.DB)
 	passwordResetRepo := repository.NewPasswordResetRepository(db.DB)
 	jwtKeyRepo := repository.NewJWTKeyRepository(db.DB)
+	membershipRepo := repository.NewMembershipRepository(db.DB)
 
 	// Initialize notification client
 	notificationClient := client.NewNotificationClient(
@@ -108,6 +109,7 @@ func main() {
 		sessionRepo,
 		passwordResetRepo,
 		jwtKeyRepo,
+		membershipRepo,
 		redisClient,
 		notificationClient,
 		userCfg,
@@ -216,6 +218,11 @@ func setupRoutes(
 		protected.GET("/users/me", userHandler.GetProfile)
 		protected.PUT("/users/me", userHandler.UpdateProfile)
 		protected.POST("/users/me/change-password", userHandler.ChangePassword)
+
+		// Institutional Memberships
+		protected.GET("/users/me/memberships", userHandler.ListMemberships)
+		protected.POST("/users/me/memberships", userHandler.AddMembership)
+		protected.POST("/users/me/switch-institution", userHandler.SwitchInstitution)
 
 		// Sessions
 		protected.GET("/users/me/sessions", sessionHandler.ListSessions)
