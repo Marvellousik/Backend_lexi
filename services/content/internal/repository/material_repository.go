@@ -53,14 +53,14 @@ func (r *materialRepository) GetByUserID(ctx context.Context, userID uuid.UUID, 
 	query := r.db.WithContext(ctx).
 		Where("user_id = ?", userID).
 		Order("created_at DESC")
-	
+
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
 	if offset > 0 {
 		query = query.Offset(offset)
 	}
-	
+
 	err := query.Find(&materials).Error
 	return materials, err
 }

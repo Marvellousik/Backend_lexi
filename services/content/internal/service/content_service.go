@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,13 +17,13 @@ import (
 )
 
 var (
-	ErrCourseNotFound      = errors.New("course not found")
-	ErrMaterialNotFound    = errors.New("material not found")
-	ErrQuizNotFound        = errors.New("quiz not found")
-	ErrQuestionNotFound    = errors.New("question not found")
-	ErrFlashcardNotFound   = errors.New("flashcard not found")
-	ErrUnauthorized        = errors.New("unauthorized access")
-	ErrInvalidInput        = errors.New("invalid input")
+	ErrCourseNotFound    = errors.New("course not found")
+	ErrMaterialNotFound  = errors.New("material not found")
+	ErrQuizNotFound      = errors.New("quiz not found")
+	ErrQuestionNotFound  = errors.New("question not found")
+	ErrFlashcardNotFound = errors.New("flashcard not found")
+	ErrUnauthorized      = errors.New("unauthorized access")
+	ErrInvalidInput      = errors.New("invalid input")
 )
 
 // ContentService defines the content management interface.
@@ -51,7 +52,7 @@ type ContentService interface {
 	GetCourseQuizzes(ctx context.Context, userID uuid.UUID, courseID uuid.UUID) ([]model.Quiz, error)
 	UpdateQuiz(ctx context.Context, userID uuid.UUID, quizID uuid.UUID, req *UpdateQuizRequest) (*model.Quiz, error)
 	DeleteQuiz(ctx context.Context, userID uuid.UUID, quizID uuid.UUID) error
-	
+
 	// Quiz question operations
 	AddQuizQuestion(ctx context.Context, userID uuid.UUID, quizID uuid.UUID, req *AddQuestionRequest) (*model.QuizQuestion, error)
 	UpdateQuizQuestion(ctx context.Context, userID uuid.UUID, questionID uuid.UUID, req *UpdateQuestionRequest) (*model.QuizQuestion, error)
@@ -63,7 +64,7 @@ type ContentService interface {
 	GetUserFlashcardDecks(ctx context.Context, userID uuid.UUID) ([]model.FlashcardDeck, error)
 	UpdateFlashcardDeck(ctx context.Context, userID uuid.UUID, deckID uuid.UUID, req *UpdateDeckRequest) (*model.FlashcardDeck, error)
 	DeleteFlashcardDeck(ctx context.Context, userID uuid.UUID, deckID uuid.UUID) error
-	
+
 	// Flashcard card operations
 	AddFlashcard(ctx context.Context, userID uuid.UUID, deckID uuid.UUID, req *AddFlashcardRequest) (*model.Flashcard, error)
 	UpdateFlashcard(ctx context.Context, userID uuid.UUID, cardID uuid.UUID, req *UpdateFlashcardRequest) (*model.Flashcard, error)
@@ -72,9 +73,9 @@ type ContentService interface {
 
 // PresignResponse holds the generated presigned URL.
 type PresignResponse struct {
-	URL         string `json:"url"`
-	MaterialID  string `json:"material_id"`
-	ExpiresAt   int64  `json:"expires_at"`
+	URL        string `json:"url"`
+	MaterialID string `json:"material_id"`
+	ExpiresAt  int64  `json:"expires_at"`
 }
 
 // contentService implements ContentService.
@@ -138,27 +139,46 @@ type UpdateCourseRequest struct {
 }
 
 type CreateMaterialRequest struct {
-	CourseID *uuid.UUID `json:"course_id,omitempty"`
-	Title    string     `json:"title" validate:"required,max=255"`
-	FileURL  string     `json:"file_url,omitempty"`
-	FileSize int64      `json:"file_size,omitempty"`
-	MimeType string     `json:"mime_type,omitempty"`
+	CourseID            *uuid.UUID `json:"course_id,omitempty"`
+	CourseOfferingID    string     `json:"course_offering_id,omitempty"`
+	Title               string     `json:"title" validate:"required,max=255"`
+	FileURL             string     `json:"file_url,omitempty"`
+	FileSize            int64      `json:"file_size,omitempty"`
+	MimeType            string     `json:"mime_type,omitempty"`
+	Sha256Checksum      string     `json:"sha256_checksum,omitempty"`
+	Version             int        `json:"version,omitempty"`
+	TrackingID          string     `json:"tracking_id,omitempty"`
+	DurationSeconds     int        `json:"duration_seconds,omitempty"`
+	TranscriptionStatus string     `json:"transcription_status,omitempty"`
+	TranscriptionText   string     `json:"transcription_text,omitempty"`
+	AudioURL            string     `json:"audio_url,omitempty"`
 }
 
 type UpdateMaterialRequest struct {
-	CourseID *uuid.UUID `json:"course_id,omitempty"`
-	Title    string     `json:"title,omitempty" validate:"omitempty,max=255"`
+	CourseID            *uuid.UUID `json:"course_id,omitempty"`
+	CourseOfferingID    string     `json:"course_offering_id,omitempty"`
+	Title               string     `json:"title,omitempty" validate:"omitempty,max=255"`
+	FileURL             string     `json:"file_url,omitempty"`
+	FileSize            int64      `json:"file_size,omitempty"`
+	MimeType            string     `json:"mime_type,omitempty"`
+	Sha256Checksum      string     `json:"sha256_checksum,omitempty"`
+	Version             int        `json:"version,omitempty"`
+	TrackingID          string     `json:"tracking_id,omitempty"`
+	DurationSeconds     int        `json:"duration_seconds,omitempty"`
+	TranscriptionStatus string     `json:"transcription_status,omitempty"`
+	TranscriptionText   string     `json:"transcription_text,omitempty"`
+	AudioURL            string     `json:"audio_url,omitempty"`
 }
 
 type CreateQuizRequest struct {
-	CourseID         *uuid.UUID           `json:"course_id,omitempty"`
-	MaterialID       *uuid.UUID           `json:"material_id,omitempty"`
-	Title            string               `json:"title" validate:"required,max=255"`
-	Description      string               `json:"description,omitempty"`
-	TimeLimitMinutes int                  `json:"time_limit_minutes,omitempty"`
+	CourseID         *uuid.UUID            `json:"course_id,omitempty"`
+	MaterialID       *uuid.UUID            `json:"material_id,omitempty"`
+	Title            string                `json:"title" validate:"required,max=255"`
+	Description      string                `json:"description,omitempty"`
+	TimeLimitMinutes int                   `json:"time_limit_minutes,omitempty"`
 	Difficulty       model.DifficultyLevel `json:"difficulty,omitempty"`
-	ShuffleQuestions bool                 `json:"shuffle_questions,omitempty"`
-	Questions        []AddQuestionRequest `json:"questions,omitempty"`
+	ShuffleQuestions bool                  `json:"shuffle_questions,omitempty"`
+	Questions        []AddQuestionRequest  `json:"questions,omitempty"`
 }
 
 type UpdateQuizRequest struct {
@@ -194,10 +214,10 @@ type UpdateQuestionRequest struct {
 }
 
 type CreateDeckRequest struct {
-	CourseID    *uuid.UUID `json:"course_id,omitempty"`
-	MaterialID  *uuid.UUID `json:"material_id,omitempty"`
-	Title       string     `json:"title" validate:"required,max=255"`
-	Description string     `json:"description,omitempty"`
+	CourseID    *uuid.UUID            `json:"course_id,omitempty"`
+	MaterialID  *uuid.UUID            `json:"material_id,omitempty"`
+	Title       string                `json:"title" validate:"required,max=255"`
+	Description string                `json:"description,omitempty"`
 	Cards       []AddFlashcardRequest `json:"cards,omitempty"`
 }
 
@@ -245,7 +265,7 @@ func (s *contentService) CreateCourse(ctx context.Context, userID uuid.UUID, req
 	if course.Color == "" {
 		course.Color = "#3B82F6"
 	}
-	
+
 	if err := s.courseRepo.Create(ctx, course); err != nil {
 		return nil, fmt.Errorf("failed to create course: %w", err)
 	}
@@ -272,7 +292,7 @@ func (s *contentService) UpdateCourse(ctx context.Context, userID uuid.UUID, cou
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if req.InstitutionID != "" {
 		course.InstitutionID = req.InstitutionID
 	}
@@ -303,7 +323,7 @@ func (s *contentService) UpdateCourse(ctx context.Context, userID uuid.UUID, cou
 	if req.Syllabus != "" {
 		course.Syllabus = req.Syllabus
 	}
-	
+
 	if err := s.courseRepo.Update(ctx, course); err != nil {
 		return nil, fmt.Errorf("failed to update course: %w", err)
 	}
@@ -318,6 +338,31 @@ func (s *contentService) DeleteCourse(ctx context.Context, userID uuid.UUID, cou
 	return s.courseRepo.Delete(ctx, courseID)
 }
 
+// isAudioFile checks whether an audio URL, file URL, MIME type, or title represents audio content.
+func isAudioFile(audioURL, fileURL, mimeType, title string) bool {
+	if audioURL != "" {
+		return true
+	}
+	mime := strings.ToLower(strings.TrimSpace(mimeType))
+	if strings.HasPrefix(mime, "audio/") {
+		return true
+	}
+	audioExts := []string{".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus", ".wma", ".weba"}
+	checkURL := strings.ToLower(fileURL)
+	for _, ext := range audioExts {
+		if strings.HasSuffix(checkURL, ext) {
+			return true
+		}
+	}
+	checkTitle := strings.ToLower(title)
+	for _, ext := range audioExts {
+		if strings.HasSuffix(checkTitle, ext) {
+			return true
+		}
+	}
+	return false
+}
+
 // ==================== Material Operations ====================
 
 func (s *contentService) CreateMaterial(ctx context.Context, userID uuid.UUID, req *CreateMaterialRequest) (*model.Material, error) {
@@ -328,16 +373,44 @@ func (s *contentService) CreateMaterial(ctx context.Context, userID uuid.UUID, r
 		}
 	}
 
-	material := &model.Material{
-		UserID:           userID,
-		CourseID:         req.CourseID,
-		Title:            req.Title,
-		FileURL:          req.FileURL,
-		FileSize:         req.FileSize,
-		MimeType:         req.MimeType,
-		ProcessingStatus: model.ProcessingStatusPending,
+	version := req.Version
+	if version <= 0 {
+		version = 1
 	}
-	
+
+	trackingID := req.TrackingID
+	transcriptionStatus := req.TranscriptionStatus
+	if transcriptionStatus == "" {
+		transcriptionStatus = "none"
+	}
+
+	// Asynchronous audio upload tracking: when AudioURL or audio file is provided,
+	// generate a unique tracking_id if empty, and set transcription_status = "pending" for background processing.
+	if isAudioFile(req.AudioURL, req.FileURL, req.MimeType, req.Title) {
+		if trackingID == "" {
+			trackingID = fmt.Sprintf("trk_%s", uuid.New().String())
+		}
+		transcriptionStatus = "pending"
+	}
+
+	material := &model.Material{
+		UserID:              userID,
+		CourseID:            req.CourseID,
+		CourseOfferingID:    req.CourseOfferingID,
+		Title:               req.Title,
+		FileURL:             req.FileURL,
+		FileSize:            req.FileSize,
+		MimeType:            req.MimeType,
+		Sha256Checksum:      req.Sha256Checksum,
+		Version:             version,
+		TrackingID:          trackingID,
+		DurationSeconds:     req.DurationSeconds,
+		ProcessingStatus:    model.ProcessingStatusPending,
+		TranscriptionStatus: transcriptionStatus,
+		TranscriptionText:   req.TranscriptionText,
+		AudioURL:            req.AudioURL,
+	}
+
 	if err := s.materialRepo.Create(ctx, material); err != nil {
 		return nil, fmt.Errorf("failed to create material: %w", err)
 	}
@@ -373,7 +446,7 @@ func (s *contentService) UpdateMaterial(ctx context.Context, userID uuid.UUID, m
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if req.Title != "" {
 		material.Title = req.Title
 	}
@@ -384,7 +457,54 @@ func (s *contentService) UpdateMaterial(ctx context.Context, userID uuid.UUID, m
 		}
 		material.CourseID = req.CourseID
 	}
-	
+	if req.CourseOfferingID != "" {
+		material.CourseOfferingID = req.CourseOfferingID
+	}
+	if req.FileURL != "" {
+		material.FileURL = req.FileURL
+	}
+	if req.FileSize != 0 {
+		material.FileSize = req.FileSize
+	}
+	if req.MimeType != "" {
+		material.MimeType = req.MimeType
+	}
+	if req.Sha256Checksum != "" {
+		material.Sha256Checksum = req.Sha256Checksum
+	}
+	if req.Version > 0 {
+		material.Version = req.Version
+	}
+	if req.DurationSeconds > 0 {
+		material.DurationSeconds = req.DurationSeconds
+	}
+	if req.TrackingID != "" {
+		material.TrackingID = req.TrackingID
+	}
+	if req.AudioURL != "" {
+		material.AudioURL = req.AudioURL
+	}
+	if req.TranscriptionText != "" {
+		material.TranscriptionText = req.TranscriptionText
+	}
+	if req.TranscriptionStatus != "" {
+		material.TranscriptionStatus = req.TranscriptionStatus
+	}
+
+	// Asynchronous audio upload tracking: when AudioURL or audio file is provided,
+	// generate a unique tracking_id if empty, and set transcription_status = "pending" for background processing.
+	audioProvided := req.AudioURL != "" ||
+		(req.MimeType != "" && strings.HasPrefix(strings.ToLower(req.MimeType), "audio/")) ||
+		(req.FileURL != "" && isAudioFile("", req.FileURL, "", ""))
+	if audioProvided {
+		if material.TrackingID == "" {
+			material.TrackingID = fmt.Sprintf("trk_%s", uuid.New().String())
+		}
+		if req.TranscriptionStatus == "" {
+			material.TranscriptionStatus = "pending"
+		}
+	}
+
 	if err := s.materialRepo.Update(ctx, material); err != nil {
 		return nil, fmt.Errorf("failed to update material: %w", err)
 	}
@@ -493,11 +613,11 @@ func (s *contentService) CreateQuiz(ctx context.Context, userID uuid.UUID, req *
 		Difficulty:       req.Difficulty,
 		ShuffleQuestions: req.ShuffleQuestions,
 	}
-	
+
 	if err := s.quizRepo.Create(ctx, quiz); err != nil {
 		return nil, fmt.Errorf("failed to create quiz: %w", err)
 	}
-	
+
 	// Add questions if provided
 	for i, qReq := range req.Questions {
 		// Generate IDs for options if not provided
@@ -509,7 +629,7 @@ func (s *contentService) CreateQuiz(ctx context.Context, userID uuid.UUID, req *
 			opt.OrderIndex = j
 			options[j] = opt
 		}
-		
+
 		question := &model.QuizQuestion{
 			QuizID:        quiz.ID,
 			QuestionText:  qReq.QuestionText,
@@ -528,7 +648,7 @@ func (s *contentService) CreateQuiz(ctx context.Context, userID uuid.UUID, req *
 			return nil, fmt.Errorf("failed to create question: %w", err)
 		}
 	}
-	
+
 	// Reload quiz with questions
 	return s.quizRepo.GetByID(ctx, quiz.ID)
 }
@@ -562,7 +682,7 @@ func (s *contentService) UpdateQuiz(ctx context.Context, userID uuid.UUID, quizI
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if req.CourseID != nil {
 		// Verify course exists and belongs to user
 		if _, err := s.GetCourse(ctx, userID, *req.CourseID); err != nil {
@@ -592,7 +712,7 @@ func (s *contentService) UpdateQuiz(ctx context.Context, userID uuid.UUID, quizI
 	if req.ShuffleQuestions != nil {
 		quiz.ShuffleQuestions = *req.ShuffleQuestions
 	}
-	
+
 	if err := s.quizRepo.Update(ctx, quiz); err != nil {
 		return nil, fmt.Errorf("failed to update quiz: %w", err)
 	}
@@ -613,7 +733,7 @@ func (s *contentService) AddQuizQuestion(ctx context.Context, userID uuid.UUID, 
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Generate IDs for options if not provided
 	options := make(model.QuizOptions, len(req.Options))
 	for j, opt := range req.Options {
@@ -623,7 +743,7 @@ func (s *contentService) AddQuizQuestion(ctx context.Context, userID uuid.UUID, 
 		opt.OrderIndex = j
 		options[j] = opt
 	}
-	
+
 	question := &model.QuizQuestion{
 		QuizID:        quizID,
 		QuestionText:  req.QuestionText,
@@ -638,7 +758,7 @@ func (s *contentService) AddQuizQuestion(ctx context.Context, userID uuid.UUID, 
 	if question.Points == 0 {
 		question.Points = 1
 	}
-	
+
 	if err := s.quizRepo.CreateQuestion(ctx, question); err != nil {
 		return nil, fmt.Errorf("failed to create question: %w", err)
 	}
@@ -651,13 +771,13 @@ func (s *contentService) UpdateQuizQuestion(ctx context.Context, userID uuid.UUI
 	if err != nil {
 		return nil, ErrQuestionNotFound
 	}
-	
+
 	// Verify quiz ownership
 	_, err = s.GetQuiz(ctx, userID, targetQuestion.QuizID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Update fields
 	if req.QuestionText != "" {
 		targetQuestion.QuestionText = req.QuestionText
@@ -692,7 +812,7 @@ func (s *contentService) UpdateQuizQuestion(ctx context.Context, userID uuid.UUI
 	if req.Difficulty != "" {
 		targetQuestion.Difficulty = req.Difficulty
 	}
-	
+
 	if err := s.quizRepo.UpdateQuestion(ctx, targetQuestion); err != nil {
 		return nil, fmt.Errorf("failed to update question: %w", err)
 	}
@@ -705,13 +825,13 @@ func (s *contentService) DeleteQuizQuestion(ctx context.Context, userID uuid.UUI
 	if err != nil {
 		return ErrQuestionNotFound
 	}
-	
+
 	// Verify quiz ownership
 	_, err = s.GetQuiz(ctx, userID, targetQuestion.QuizID)
 	if err != nil {
 		return err
 	}
-	
+
 	return s.quizRepo.DeleteQuestion(ctx, questionID)
 }
 
@@ -739,11 +859,11 @@ func (s *contentService) CreateFlashcardDeck(ctx context.Context, userID uuid.UU
 		Title:       req.Title,
 		Description: req.Description,
 	}
-	
+
 	if err := s.flashcardRepo.CreateDeck(ctx, deck); err != nil {
 		return nil, fmt.Errorf("failed to create deck: %w", err)
 	}
-	
+
 	// Add cards if provided
 	for i, cReq := range req.Cards {
 		card := &model.Flashcard{
@@ -757,7 +877,7 @@ func (s *contentService) CreateFlashcardDeck(ctx context.Context, userID uuid.UU
 			return nil, fmt.Errorf("failed to create card: %w", err)
 		}
 	}
-	
+
 	// Reload deck with cards
 	return s.flashcardRepo.GetDeckByID(ctx, deck.ID)
 }
@@ -782,7 +902,7 @@ func (s *contentService) UpdateFlashcardDeck(ctx context.Context, userID uuid.UU
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if req.CourseID != nil {
 		// Verify course exists and belongs to user
 		if _, err := s.GetCourse(ctx, userID, *req.CourseID); err != nil {
@@ -803,7 +923,7 @@ func (s *contentService) UpdateFlashcardDeck(ctx context.Context, userID uuid.UU
 	if req.Description != "" {
 		deck.Description = req.Description
 	}
-	
+
 	if err := s.flashcardRepo.UpdateDeck(ctx, deck); err != nil {
 		return nil, fmt.Errorf("failed to update deck: %w", err)
 	}
@@ -824,7 +944,7 @@ func (s *contentService) AddFlashcard(ctx context.Context, userID uuid.UUID, dec
 	if err != nil {
 		return nil, err
 	}
-	
+
 	card := &model.Flashcard{
 		DeckID:     deckID,
 		FrontText:  req.FrontText,
@@ -832,7 +952,7 @@ func (s *contentService) AddFlashcard(ctx context.Context, userID uuid.UUID, dec
 		Difficulty: req.Difficulty,
 		OrderIndex: req.OrderIndex,
 	}
-	
+
 	if err := s.flashcardRepo.CreateCard(ctx, card); err != nil {
 		return nil, fmt.Errorf("failed to create card: %w", err)
 	}
@@ -845,13 +965,13 @@ func (s *contentService) UpdateFlashcard(ctx context.Context, userID uuid.UUID, 
 	if err != nil {
 		return nil, ErrFlashcardNotFound
 	}
-	
+
 	// Verify deck ownership
 	_, err = s.GetFlashcardDeck(ctx, userID, card.DeckID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if req.FrontText != "" {
 		card.FrontText = req.FrontText
 	}
@@ -864,7 +984,7 @@ func (s *contentService) UpdateFlashcard(ctx context.Context, userID uuid.UUID, 
 	if req.OrderIndex != 0 {
 		card.OrderIndex = req.OrderIndex
 	}
-	
+
 	if err := s.flashcardRepo.UpdateCard(ctx, card); err != nil {
 		return nil, fmt.Errorf("failed to update card: %w", err)
 	}
@@ -877,12 +997,12 @@ func (s *contentService) DeleteFlashcard(ctx context.Context, userID uuid.UUID, 
 	if err != nil {
 		return ErrFlashcardNotFound
 	}
-	
+
 	// Verify deck ownership
 	_, err = s.GetFlashcardDeck(ctx, userID, card.DeckID)
 	if err != nil {
 		return err
 	}
-	
+
 	return s.flashcardRepo.DeleteCard(ctx, cardID)
 }

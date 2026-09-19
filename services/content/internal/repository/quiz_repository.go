@@ -18,7 +18,7 @@ type QuizRepository interface {
 	GetByMaterialID(ctx context.Context, materialID uuid.UUID) ([]model.Quiz, error)
 	Update(ctx context.Context, quiz *model.Quiz) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	
+
 	// Question methods
 	CreateQuestion(ctx context.Context, question *model.QuizQuestion) error
 	GetQuestionsByQuizID(ctx context.Context, quizID uuid.UUID) ([]model.QuizQuestion, error)

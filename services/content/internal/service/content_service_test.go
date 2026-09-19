@@ -688,3 +688,192 @@ func TestCourseIntelligence_InstitutionalAndCohortBinding(t *testing.T) {
 	assert.Contains(t, updated.Syllabus, "Graphs")
 }
 
+func TestDurableContentProvenance_Sha256AndOfferingBinding(t *testing.T) {
+	tc := setupTestContext()
+	ctx := context.Background()
+	user := uuid.New()
+
+	const initialSHA = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+	const offeringID = "offering_bio101_fall2026"
+
+	t.Run("CreateMaterial with SHA-256 provenance and course offering binding", func(t *testing.T) {
+		req := &service.CreateMaterialRequest{
+			Title:            "Cell Structure Lecture Notes",
+			FileURL:          "https://storage.zuri.local/materials/bio101_cell.pdf",
+			FileSize:         1048576,
+			MimeType:         "application/pdf",
+			Sha256Checksum:   initialSHA,
+			CourseOfferingID: offeringID,
+			DurationSeconds:  3600,
+			Version:          1,
+		}
+
+		mat, err := tc.svc.CreateMaterial(ctx, user, req)
+		require.NoError(t, err)
+		require.NotNil(t, mat)
+
+		assert.Equal(t, initialSHA, mat.Sha256Checksum)
+		assert.Equal(t, offeringID, mat.CourseOfferingID)
+		assert.Equal(t, 1, mat.Version)
+		assert.Equal(t, 3600, mat.DurationSeconds)
+		assert.Equal(t, "none", mat.TranscriptionStatus)
+	})
+
+	t.Run("UpdateMaterial preserves provenance and updates course offering binding", func(t *testing.T) {
+		req := &service.CreateMaterialRequest{
+			Title:            "Original Document",
+			Sha256Checksum:   initialSHA,
+			CourseOfferingID: offeringID,
+		}
+		mat, err := tc.svc.CreateMaterial(ctx, user, req)
+		require.NoError(t, err)
+
+		const updatedSHA = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+		const newOfferingID = "offering_bio101_spring2027"
+
+		updateReq := &service.UpdateMaterialRequest{
+			Sha256Checksum:   updatedSHA,
+			CourseOfferingID: newOfferingID,
+			Version:          2,
+			DurationSeconds:  5400,
+		}
+
+		updated, err := tc.svc.UpdateMaterial(ctx, user, mat.ID, updateReq)
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+
+		assert.Equal(t, updatedSHA, updated.Sha256Checksum)
+		assert.Equal(t, newOfferingID, updated.CourseOfferingID)
+		assert.Equal(t, 2, updated.Version)
+		assert.Equal(t, 5400, updated.DurationSeconds)
+	})
+}
+
+func TestAudioTracking_GenerationAndStatus(t *testing.T) {
+	tc := setupTestContext()
+	ctx := context.Background()
+	user := uuid.New()
+
+	t.Run("AudioURL triggers unique tracking_id generation and sets pending transcription_status", func(t *testing.T) {
+		req := &service.CreateMaterialRequest{
+			Title:    "Recorded Lecture Audio",
+			AudioURL: "https://storage.zuri.local/audio/lecture1.mp3",
+		}
+
+		mat, err := tc.svc.CreateMaterial(ctx, user, req)
+		require.NoError(t, err)
+		require.NotNil(t, mat)
+
+		assert.NotEmpty(t, mat.TrackingID)
+		assert.Contains(t, mat.TrackingID, "trk_")
+		assert.Equal(t, "pending", mat.TranscriptionStatus)
+		assert.Equal(t, req.AudioURL, mat.AudioURL)
+	})
+
+	t.Run("Audio MIME type triggers tracking_id and pending status without explicit AudioURL", func(t *testing.T) {
+		req := &service.CreateMaterialRequest{
+			Title:    "Podcast Audio File",
+			FileURL:  "https://storage.zuri.local/files/episode.bin",
+			MimeType: "audio/mpeg",
+		}
+
+		mat, err := tc.svc.CreateMaterial(ctx, user, req)
+		require.NoError(t, err)
+		require.NotNil(t, mat)
+
+		assert.NotEmpty(t, mat.TrackingID)
+		assert.Contains(t, mat.TrackingID, "trk_")
+		assert.Equal(t, "pending", mat.TranscriptionStatus)
+	})
+
+	t.Run("Audio file extension triggers tracking_id and pending status", func(t *testing.T) {
+		req := &service.CreateMaterialRequest{
+			Title:   "Voice Memo",
+			FileURL: "https://storage.zuri.local/recordings/memo.wav",
+		}
+
+		mat, err := tc.svc.CreateMaterial(ctx, user, req)
+		require.NoError(t, err)
+		require.NotNil(t, mat)
+
+		assert.NotEmpty(t, mat.TrackingID)
+		assert.Equal(t, "pending", mat.TranscriptionStatus)
+	})
+
+	t.Run("Non-audio file does not generate tracking_id and defaults to none transcription_status", func(t *testing.T) {
+		req := &service.CreateMaterialRequest{
+			Title:    "Syllabus PDF",
+			FileURL:  "https://storage.zuri.local/files/syllabus.pdf",
+			MimeType: "application/pdf",
+		}
+
+		mat, err := tc.svc.CreateMaterial(ctx, user, req)
+		require.NoError(t, err)
+		require.NotNil(t, mat)
+
+		assert.Empty(t, mat.TrackingID)
+		assert.Equal(t, "none", mat.TranscriptionStatus)
+	})
+
+	t.Run("Explicit tracking_id is preserved when provided with audio", func(t *testing.T) {
+		const customTrackingID = "custom-audio-tracking-id-12345"
+		req := &service.CreateMaterialRequest{
+			Title:      "Lab Session Audio",
+			AudioURL:   "https://storage.zuri.local/audio/lab.ogg",
+			TrackingID: customTrackingID,
+		}
+
+		mat, err := tc.svc.CreateMaterial(ctx, user, req)
+		require.NoError(t, err)
+		require.NotNil(t, mat)
+
+		assert.Equal(t, customTrackingID, mat.TrackingID)
+		assert.Equal(t, "pending", mat.TranscriptionStatus)
+	})
+
+	t.Run("UpdateMaterial with AudioURL generates tracking_id if empty and sets status to pending", func(t *testing.T) {
+		initialReq := &service.CreateMaterialRequest{
+			Title:    "Text Document",
+			FileURL:  "https://storage.zuri.local/docs/doc.txt",
+			MimeType: "text/plain",
+		}
+		mat, err := tc.svc.CreateMaterial(ctx, user, initialReq)
+		require.NoError(t, err)
+		assert.Empty(t, mat.TrackingID)
+		assert.Equal(t, "none", mat.TranscriptionStatus)
+
+		updateReq := &service.UpdateMaterialRequest{
+			AudioURL: "https://storage.zuri.local/audio/doc_narrated.mp3",
+		}
+		updated, err := tc.svc.UpdateMaterial(ctx, user, mat.ID, updateReq)
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+
+		assert.NotEmpty(t, updated.TrackingID)
+		assert.Contains(t, updated.TrackingID, "trk_")
+		assert.Equal(t, "pending", updated.TranscriptionStatus)
+	})
+
+	t.Run("UpdateMaterial allows completing transcription with text", func(t *testing.T) {
+		createReq := &service.CreateMaterialRequest{
+			Title:    "Lecture Voice Note",
+			AudioURL: "https://storage.zuri.local/audio/note.m4a",
+		}
+		mat, err := tc.svc.CreateMaterial(ctx, user, createReq)
+		require.NoError(t, err)
+		existingTrackingID := mat.TrackingID
+
+		const transcribedText = "Welcome to the introduction to neural networks and gradient descent."
+		updateReq := &service.UpdateMaterialRequest{
+			TranscriptionStatus: "completed",
+			TranscriptionText:   transcribedText,
+		}
+		updated, err := tc.svc.UpdateMaterial(ctx, user, mat.ID, updateReq)
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+
+		assert.Equal(t, existingTrackingID, updated.TrackingID)
+		assert.Equal(t, "completed", updated.TranscriptionStatus)
+		assert.Equal(t, transcribedText, updated.TranscriptionText)
+	})
+}

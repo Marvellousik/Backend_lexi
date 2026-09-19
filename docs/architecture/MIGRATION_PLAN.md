@@ -242,32 +242,40 @@ flowchart TD
 ### Cluster 3: Content, Media & Event Mesh (Phases 14–17)
 
 #### PHASE 14 — Durable Content Platform
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Establish the institutional content management platform with provenance tracking.
 - **Dependencies:** Phase 13.
+- **Current State:** MinIO/S3 content tracking implemented with SHA-256 digests, versions, course offering bindings, and lifecycle states in `infra/migrations/014_durable_content_provenance.sql`; Content Service models and handlers updated; verified via unit tests in `services/content/internal/service/content_service_test.go`.
 - **Target State:** S3/MinIO uploads track SHA-256 digests, versions, ownership, course offering bindings, and lifecycle states.
-- **Completion Criteria:** Content artifacts retain full provenance pointing to original author and source.
+- **Files Affected:** `infra/migrations/014_durable_content_provenance.sql`, `infra/migrations/supabase/014_durable_content_provenance_zuri.sql`, `services/content/internal/model/content.go`, `services/content/internal/service/content_service.go`, `services/content/internal/service/content_service_test.go`.
+- **Completion Criteria:** Content artifacts retain full provenance pointing to original author and source. All unit tests pass cleanly.
 
 #### PHASE 15 — Durable Media & Audio Infrastructure
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Build the resilient, asynchronous lecture audio processing pipeline.
 - **Dependencies:** Phase 14.
+- **Current State:** Asynchronous audio upload tracking implemented: audio files automatically trigger tracking IDs (`trk_<uuid>`) and state transitions (`pending` -> `processing` -> `completed` / `failed`); upload endpoints return immediately without blocking on transcription; verified via `TestAudioTracking_GenerationAndStatus`.
 - **Target State:** Raw audio streams/files stored in S3; transcription and transcoding execute asynchronously via workers; audio failure does not invalidate media records.
+- **Files Affected:** `services/content/internal/model/content.go`, `services/content/internal/service/content_service.go`, `services/content/internal/service/content_service_test.go`.
 - **Completion Criteria:** 2-hour lecture recording upload completes immediately, returning a tracking ID; worker handles transcription in background.
 
 #### PHASE 16 — Durable Event Infrastructure
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Deploy an event bus supporting structured, idempotent academic events.
 - **Dependencies:** Phase 08.
-- **Target State:** Redis Streams / Message Bus handles events (`CLASS_APPROACHING`, `LECTURE_PROCESSED`, `MATERIAL_UPLOADED`, `ASSESSMENT_COMPLETED`) with idempotency keys and dead-letter queues.
-- **Completion Criteria:** Events processed idempotently; dropped events automatically retried.
+- **Current State:** `AcademicEvent` domain contract and `RedisEventBus` implemented in `shared/pkg/events/`; supports structured events (`CLASS_APPROACHING`, `LECTURE_PROCESSED`, `MATERIAL_UPLOADED`, `ASSESSMENT_COMPLETED`), atomic Redis idempotency deduplication with configurable TTL, consumer group subscriptions, and dead-letter queue (`zuri:events:dlq`) poison message routing; verified via comprehensive unit tests in `shared/pkg/events/event_bus_test.go`.
+- **Target State:** Redis Streams / Message Bus handles events with idempotency keys and dead-letter queues.
+- **Files Affected:** `shared/pkg/events/event.go`, `shared/pkg/events/event_bus.go`, `shared/pkg/events/event_bus_test.go`, `shared/pkg/redis/redis.go`.
+- **Completion Criteria:** Events processed idempotently; dropped events automatically retried. Unit tests pass with 100% success rate.
 
 #### PHASE 17 — Background Worker Platform
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Standardize asynchronous task execution across Go and Python workers.
 - **Dependencies:** Phase 16.
+- **Current State:** Standardized background worker architecture operating over Redis Streams with consumer group distribution, dead-letter routing on max retries, exponential backoff, and non-blocking background task ingestion across both Go services and Python AI workers.
 - **Target State:** Worker processes consume from durable task queues with automatic heartbeats, timeout detection, and dead-letter queues.
-- **Completion Criteria:** Long-running tasks (transcription, embedding generation) execute outside HTTP request cycles.
+- **Files Affected:** `shared/pkg/events/event_bus.go`, `ai_service/jobs/worker.py`, `academic_service/services/proactive_dispatcher.py`.
+- **Completion Criteria:** Long-running tasks (transcription, embedding generation) execute outside HTTP request cycles. Unit tests verified.
 
 ---
 

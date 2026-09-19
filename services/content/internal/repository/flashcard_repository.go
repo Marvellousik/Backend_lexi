@@ -19,7 +19,7 @@ type FlashcardRepository interface {
 	GetDecksByMaterialID(ctx context.Context, materialID uuid.UUID) ([]model.FlashcardDeck, error)
 	UpdateDeck(ctx context.Context, deck *model.FlashcardDeck) error
 	DeleteDeck(ctx context.Context, id uuid.UUID) error
-	
+
 	// Card methods
 	CreateCard(ctx context.Context, card *model.Flashcard) error
 	GetCardsByDeckID(ctx context.Context, deckID uuid.UUID) ([]model.Flashcard, error)

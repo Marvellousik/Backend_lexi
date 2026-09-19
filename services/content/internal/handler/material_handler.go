@@ -295,4 +295,3 @@ func (h *MaterialHandler) UpdateProcessingStatus(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, Response{Message: "status updated successfully"})
 }
-
