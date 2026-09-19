@@ -60,9 +60,11 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 			protected.GET("/sync/state", h.GetSyncState)
 			protected.POST("/sync/ack", h.AckSync)
 
-			// Events
+			// Events (supporting both /events and /sync/events for gateway proxy compatibility)
 			protected.GET("/events", h.GetEvents)
 			protected.POST("/events", h.CreateEvent)
+			protected.GET("/sync/events", h.GetEvents)
+			protected.POST("/sync/events", h.CreateEvent)
 		}
 
 		// Internal routes (for other services)

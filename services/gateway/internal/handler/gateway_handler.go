@@ -173,6 +173,8 @@ func (h *GatewayHandler) RegisterRoutes(e *echo.Echo) {
 		protected.POST("/sync/ack", h.ProxyToSyncService)
 		protected.GET("/sync/events", h.ProxyToSyncService)
 		protected.POST("/sync/events", h.ProxyToSyncService)
+		protected.GET("/events", h.ProxyToSyncService)
+		protected.POST("/events", h.ProxyToSyncService)
 		protected.GET("/presence", h.ProxyToSyncService)
 		protected.PUT("/presence", h.ProxyToSyncService)
 		protected.GET("/presence/online", h.ProxyToSyncService)
