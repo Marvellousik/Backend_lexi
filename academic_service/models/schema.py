@@ -1,7 +1,7 @@
 """
 Pydantic schemas and DTOs for the Academic Context Graph & Timetables.
 """
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime, time, date
 from pydantic import BaseModel, Field
 
@@ -27,6 +27,93 @@ class DepartmentDTO(BaseModel):
     institution_id: str
     name: str
     code: str
+
+
+class ProgramResponse(BaseModel):
+    id: str
+    department_id: str
+    institution_id: str
+    name: str
+    code: str
+    degree_type: Optional[str] = "BSc"
+    duration_years: Optional[int] = 4
+    created_at: Optional[Union[str, datetime]] = None
+
+    model_config = {"from_attributes": True}
+
+
+class DepartmentHierarchyResponse(BaseModel):
+    id: str
+    faculty_id: str
+    institution_id: str
+    name: str
+    code: str
+    programs: List[ProgramResponse] = []
+
+    model_config = {"from_attributes": True}
+
+
+class FacultyHierarchyResponse(BaseModel):
+    id: str
+    institution_id: str
+    name: str
+    code: str
+    departments: List[DepartmentHierarchyResponse] = []
+
+    model_config = {"from_attributes": True}
+
+
+class InstitutionHierarchyResponse(BaseModel):
+    id: str
+    name: str
+    code: str
+    domain: Optional[str] = None
+    settings: Optional[Dict[str, Any]] = None
+    faculties: List[FacultyHierarchyResponse] = []
+    departments: List[DepartmentHierarchyResponse] = []
+    programs: List[ProgramResponse] = []
+
+    model_config = {"from_attributes": True}
+
+
+class SemesterResponse(BaseModel):
+    id: str
+    session_id: str
+    institution_id: str
+    name: str
+    start_date: Optional[Union[str, date]] = None
+    end_date: Optional[Union[str, date]] = None
+    is_current: bool = False
+
+    model_config = {"from_attributes": True}
+
+
+class AcademicSessionResponse(BaseModel):
+    id: str
+    institution_id: str
+    name: str
+    start_date: Optional[Union[str, date]] = None
+    end_date: Optional[Union[str, date]] = None
+    is_current: bool = False
+    semesters: List[SemesterResponse] = []
+
+    model_config = {"from_attributes": True}
+
+
+class CourseOfferingResponse(BaseModel):
+    id: str
+    course_id: str
+    institution_id: str
+    semester_id: Optional[str] = None
+    lecturer_id: Optional[str] = None
+    capacity: int = 150
+    status: str = "active"
+    created_at: Optional[Union[str, datetime]] = None
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
 
 
 class CourseScheduleDTO(BaseModel):
@@ -82,6 +169,50 @@ class CourseDetailDTO(BaseModel):
 class CourseEnrollmentRequest(BaseModel):
     course_id: str = Field(..., description="Course ID or Course Code (e.g. CSC 301)")
     semester: Optional[str] = "2025/2026_FIRST"
+
+
+class EnrollmentRequest(BaseModel):
+    course_id: Optional[str] = Field(None, description="Course ID or Course Code (e.g. CSC 301)")
+    course_offering_id: Optional[str] = Field(None, description="Course Offering cohort ID")
+    enrollment_type: str = Field(default="credit", description="Enrollment type: 'credit' or 'audit'")
+    semester: Optional[str] = "2025/2026_FIRST"
+    user_id: Optional[str] = None
+
+
+class EnrollmentResponse(BaseModel):
+    id: str
+    user_id: str
+    course_id: str
+    course_offering_id: Optional[str] = None
+    enrollment_type: str = "credit"
+    grade: Optional[str] = None
+    semester: Optional[str] = "2025/2026_FIRST"
+    status: str = "active"
+    created_at: Optional[Union[str, datetime]] = None
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class LectureSessionResponse(BaseModel):
+    id: str
+    course_id: str
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
+    course_offering_id: Optional[str] = None
+    enrollment_type: Optional[str] = None
+    lecture_number: Optional[int] = None
+    title: str
+    date: str
+    start_time: str
+    end_time: str
+    venue: Optional[str] = None
+    topics_covered: List[str] = []
+    is_processed: bool = False
+    source: str = "lecture"
+
+    model_config = {"from_attributes": True}
 
 
 class TimetableSlotCreate(BaseModel):

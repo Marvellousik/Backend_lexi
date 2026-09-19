@@ -11,18 +11,23 @@ import (
 	"gorm.io/gorm"
 )
 
-// Course represents a course/study subject.
+// Course represents a course/study subject and institutional intelligence hub.
 type Course struct {
-	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
-	UserID      uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
-	Name        string         `gorm:"type:varchar(255);not null" json:"name"`
-	Description string         `gorm:"type:text" json:"description"`
-	Color       string         `gorm:"type:varchar(7);default:'#3B82F6'" json:"color"`
-	Semester    string         `gorm:"type:varchar(20)" json:"semester"`
-	Year        int            `json:"year"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	ID               uuid.UUID      `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
+	UserID           uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
+	InstitutionID    string         `gorm:"type:varchar(255);index" json:"institution_id,omitempty"`
+	Code             string         `gorm:"type:varchar(50);index" json:"code,omitempty"`
+	CourseOfferingID string         `gorm:"type:varchar(255);index" json:"course_offering_id,omitempty"`
+	Name             string         `gorm:"type:varchar(255);not null" json:"name"`
+	Description      string         `gorm:"type:text" json:"description"`
+	Color            string         `gorm:"type:varchar(7);default:'#3B82F6'" json:"color"`
+	Semester         string         `gorm:"type:varchar(20)" json:"semester"`
+	Year             int            `json:"year"`
+	CreditUnits      int            `gorm:"type:int;default:3" json:"credit_units"`
+	Syllabus         string         `gorm:"type:text" json:"syllabus,omitempty"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Associations
 	Materials      []Material      `gorm:"foreignKey:CourseID" json:"materials,omitempty"`

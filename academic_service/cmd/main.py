@@ -24,6 +24,11 @@ from academic_service.models.schema import (
     ResolveGapRequest,
     LectureIngestRequest,
     LectureIngestionResponse,
+    InstitutionHierarchyResponse,
+    EnrollmentRequest,
+    EnrollmentResponse,
+    CourseOfferingResponse,
+    LectureSessionResponse,
 )
 from academic_service.services.academic_service import AcademicService
 from academic_service.services.timetable_service import TimetableService
@@ -80,6 +85,22 @@ async def health():
 
 
 # ==============================================================================
+# Institutions & Hierarchy Endpoints
+# ==============================================================================
+
+@app.get("/api/v1/academic/institutions/{institution_id}/hierarchy", response_model=InstitutionHierarchyResponse)
+def get_institution_hierarchy(
+    institution_id: str,
+    db: Session = Depends(get_db),
+):
+    """Fetch complete academic hierarchy (faculties, departments, and programs) for an institution."""
+    hierarchy = AcademicService.get_institution_hierarchy(institution_id=institution_id, db=db)
+    if not hierarchy:
+        raise HTTPException(status_code=404, detail=f"Institution '{institution_id}' not found")
+    return hierarchy
+
+
+# ==============================================================================
 # Courses & Academic Catalog Endpoints
 # ==============================================================================
 
@@ -117,6 +138,37 @@ def enroll_course(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.post("/api/v1/academic/enroll", response_model=EnrollmentResponse)
+def enroll_cohort(
+    req: EnrollmentRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Enroll student into a course offering or course cohort with credit/audit distinction."""
+    target_user_id = req.user_id or user_id
+    try:
+        return AcademicService.enroll(
+            db=db,
+            user_id=target_user_id,
+            course_identifier=req.course_id,
+            course_offering_id=req.course_offering_id,
+            enrollment_type=req.enrollment_type,
+            semester=req.semester or "2025/2026_FIRST",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/v1/academic/offerings", response_model=List[CourseOfferingResponse])
+def get_offerings(
+    course_id: Optional[str] = None,
+    institution_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """List active course offerings optionally filtered by course or institution."""
+    return AcademicService.get_course_offerings(db, course_id=course_id, institution_id=institution_id)
+
+
 # ==============================================================================
 # Timetable & Schedule Endpoints
 # ==============================================================================
@@ -137,6 +189,24 @@ def get_next_class(
 ):
     """Calculate the immediate next upcoming class and countdown minutes."""
     return TimetableService.get_next_class_for_student(db, user_id)
+
+
+@app.get("/api/v1/academic/timetable/sessions", response_model=List[LectureSessionResponse])
+def get_upcoming_sessions(
+    course_offering_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Query upcoming lecture sessions by course offering or user enrollment for a date window."""
+    return TimetableService.get_upcoming_lecture_session_dtos(
+        db=db,
+        user_id=user_id if not course_offering_id else None,
+        course_offering_id=course_offering_id,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
 
 @app.post("/api/v1/academic/timetable/slots", response_model=CourseScheduleDTO)

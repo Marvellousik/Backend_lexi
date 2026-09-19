@@ -5,7 +5,7 @@ from academic_service.services.proactive_dispatcher import ProactiveDispatcher
 from academic_service.models.orm import ProactiveIntervention
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_dispatch_intervention_alert():
     intervention = ProactiveIntervention(
         id="int_test_123",

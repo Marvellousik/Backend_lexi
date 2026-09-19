@@ -35,6 +35,7 @@ class Institution(Base):
 
     faculties = relationship("Faculty", back_populates="institution", cascade="all, delete-orphan")
     courses = relationship("Course", back_populates="institution", cascade="all, delete-orphan")
+    programs = relationship("Program", back_populates="institution", cascade="all, delete-orphan")
 
 
 class Faculty(Base):
@@ -70,6 +71,29 @@ class Department(Base):
 
     faculty = relationship("Faculty", back_populates="departments")
     courses = relationship("Course", back_populates="department", cascade="all, delete-orphan")
+    programs = relationship("Program", back_populates="department", cascade="all, delete-orphan")
+
+
+class Program(Base):
+    """Academic Program (degree offering) within a department."""
+    __tablename__ = "programs"
+    __table_args__ = (
+        Index("idx_academic_programs_dept", "department_id"),
+        Index("idx_academic_programs_inst", "institution_id"),
+        {"schema": "academic"},
+    )
+
+    id = Column(String, primary_key=True)  # e.g., "prog_cs_veritas"
+    department_id = Column(String, ForeignKey("academic.departments.id"), nullable=False)
+    institution_id = Column(String, ForeignKey("academic.institutions.id"), nullable=False)
+    name = Column(String, nullable=False)  # "BSc Computer Science"
+    code = Column(String, nullable=False)  # "CSC"
+    degree_type = Column(String, default="BSc")
+    duration_years = Column(Integer, default=4)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    department = relationship("Department", back_populates="programs")
+    institution = relationship("Institution", back_populates="programs")
 
 
 class Course(Base):
@@ -97,6 +121,37 @@ class Course(Base):
     schedules = relationship("CourseSchedule", back_populates="course", cascade="all, delete-orphan")
     lectures = relationship("Lecture", back_populates="course", cascade="all, delete-orphan")
     events = relationship("AcademicEvent", back_populates="course", cascade="all, delete-orphan")
+    offerings = relationship("CourseOffering", back_populates="course", cascade="all, delete-orphan")
+
+
+class CourseOffering(Base):
+    """Specific active cohort/section offering of a course in an academic semester."""
+    __tablename__ = "course_offerings"
+    __table_args__ = (
+        Index("idx_academic_offerings_course", "course_id"),
+        Index("idx_academic_offerings_inst", "institution_id"),
+        Index("idx_academic_offerings_semester", "semester_id"),
+        Index("idx_academic_offerings_lecturer", "lecturer_id"),
+        {"schema": "academic"},
+    )
+
+    id = Column(String, primary_key=True)
+    course_id = Column(String, ForeignKey("academic.courses.id"), nullable=False)
+    institution_id = Column(String, nullable=False)
+    semester_id = Column(String, nullable=True)
+    lecturer_id = Column(String, nullable=True)
+    capacity = Column(Integer, default=150)
+    status = Column(String, default="active")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    course = relationship("Course", back_populates="offerings")
+    enrollments = relationship("StudentEnrollment", back_populates="offering", cascade="all, delete-orphan")
+    lectures = relationship("Lecture", back_populates="offering")
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("capacity", 150)
+        kwargs.setdefault("status", "active")
+        super().__init__(**kwargs)
 
 
 class CourseSchedule(Base):
@@ -121,21 +176,33 @@ class CourseSchedule(Base):
 
 
 class StudentEnrollment(Base):
-    """Student enrollment record mapping a user to a course."""
+    """Student enrollment record mapping a user to a course or offering cohort."""
     __tablename__ = "student_enrollments"
     __table_args__ = (
         Index("idx_academic_enrollments_user", "user_id"),
         Index("idx_academic_enrollments_course", "course_id"),
         Index("idx_academic_enrollments_user_course", "user_id", "course_id", unique=True),
+        Index("idx_academic_enrollments_offering", "course_offering_id"),
         {"schema": "academic"},
     )
 
     id = Column(String, primary_key=True)
     user_id = Column(String, nullable=False, index=True)
     course_id = Column(String, ForeignKey("academic.courses.id"), nullable=False)
+    course_offering_id = Column(String, ForeignKey("academic.course_offerings.id"), nullable=True)
+    enrollment_type = Column(String, default="credit")  # 'credit', 'audit'
+    grade = Column(String, nullable=True)
     semester = Column(String, default="2025/2026_FIRST")
     status = Column(String, default="active")  # active, completed, dropped
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    course = relationship("Course")
+    offering = relationship("CourseOffering", back_populates="enrollments")
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("enrollment_type", "credit")
+        kwargs.setdefault("status", "active")
+        super().__init__(**kwargs)
 
 
 class Lecture(Base):
@@ -144,11 +211,13 @@ class Lecture(Base):
     __table_args__ = (
         Index("idx_academic_lectures_course", "course_id"),
         Index("idx_academic_lectures_date", "course_id", "date"),
+        Index("idx_academic_lectures_offering", "course_offering_id"),
         {"schema": "academic"},
     )
 
     id = Column(String, primary_key=True)
     course_id = Column(String, ForeignKey("academic.courses.id"), nullable=False)
+    course_offering_id = Column(String, ForeignKey("academic.course_offerings.id"), nullable=True)
     lecture_number = Column(Integer, nullable=False)  # e.g. 14
     title = Column(String, nullable=False)            # "Dynamic Programming & Optimal Substructure"
     date = Column(Date, nullable=True)
@@ -162,6 +231,7 @@ class Lecture(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     course = relationship("Course", back_populates="lectures")
+    offering = relationship("CourseOffering", back_populates="lectures")
 
 
 class AcademicEvent(Base):
@@ -335,5 +405,53 @@ class PartnerConversation(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     course = relationship("Course")
+
+
+class AcademicSession(Base):
+    """Academic Session (e.g. 2025/2026)."""
+    __tablename__ = "academic_sessions"
+    __table_args__ = (
+        Index("idx_academic_sessions_inst", "institution_id"),
+        {"schema": "academic"},
+    )
+
+    id = Column(String, primary_key=True)  # e.g., "session_2025_2026"
+    institution_id = Column(String, ForeignKey("academic.institutions.id"), nullable=False)
+    name = Column(String, nullable=False)  # e.g., "2025/2026"
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
+    is_current = Column(Boolean, default=False)
+
+    semesters = relationship("Semester", back_populates="academic_session", cascade="all, delete-orphan")
+    institution = relationship("Institution")
+
+
+class Semester(Base):
+    """Academic Semester within an academic session (e.g. FIRST, SECOND)."""
+    __tablename__ = "semesters"
+    __table_args__ = (
+        Index("idx_academic_semesters_session", "session_id"),
+        Index("idx_academic_semesters_inst", "institution_id"),
+        {"schema": "academic"},
+    )
+
+    id = Column(String, primary_key=True)  # e.g., "sem_2025_2026_first"
+    session_id = Column(String, ForeignKey("academic.academic_sessions.id"), nullable=False)
+    institution_id = Column(String, nullable=False)
+    name = Column(String, nullable=False)  # "FIRST" or "SECOND"
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
+    is_current = Column(Boolean, default=False)
+
+    academic_session = relationship("AcademicSession", back_populates="semesters")
+
+    @property
+    def session(self):
+        return self.academic_session
+
+    @session.setter
+    def session(self, value):
+        self.academic_session = value
+
 
 

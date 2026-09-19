@@ -201,36 +201,41 @@ flowchart TD
 - **Completion Criteria:** A single user can switch between student and lecturer contexts across institutions with active tenant JWT renewal. Unit tests pass cleanly.
 
 #### PHASE 10 — Institution & Campus Domain
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Implement University, Faculty, and Department entities with hierarchical configuration.
 - **Dependencies:** Phase 09.
-- **Target State:** Full university hierarchy: `institutions` ➔ `faculties` ➔ `departments` ➔ `programs`.
-- **Database Impact:** Create `zuri_academic.institutions`, `faculties`, `departments`, `programs`.
-- **Completion Criteria:** Multi-campus university structure represented with department-level isolation.
+- **Current State:** Full university hierarchy: `institutions` ➔ `faculties` ➔ `departments` ➔ `programs` implemented with migration `012_create_programs_and_cohorts.sql` in `zuri_academic` schema with backward-compatible views in `academic`; `academic_service/services/academic_service.py` provides `get_institution_hierarchy`; verified via unit tests in `academic_service/tests/test_academic_service.py`.
+- **Target State:** Multi-campus university structure represented with department-level isolation.
+- **Files Affected:** `infra/migrations/012_create_programs_and_cohorts.sql`, `infra/migrations/supabase/012_create_programs_and_cohorts_zuri.sql`, `academic_service/models/orm.py`, `academic_service/models/schema.py`, `academic_service/services/academic_service.py`, `academic_service/cmd/main.py`.
+- **Completion Criteria:** Multi-campus university structure represented with department-level isolation. Unit tests pass cleanly.
 
 #### PHASE 11 — Academic Structure & Enrollments
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Implement Academic Sessions, Semesters, Academic Levels, and Course Enrollments.
 - **Dependencies:** Phase 10.
+- **Current State:** `zuri_academic.academic_sessions`, `semesters`, and `course_offerings` created; `student_enrollments` upgraded with `course_offering_id`, `enrollment_type` ('credit', 'audit'), and `grade`; enrollment endpoints `POST /api/v1/academic/enroll` and `GET /api/v1/academic/offerings` implemented; verified via `test_enrollment_and_offerings.py`.
 - **Target State:** Students enroll in specific course offering cohorts (`course_offerings`); enrollments support credit, audit, and status lifecycles.
-- **Database Impact:** Create `semesters`, `course_offerings`, `enrollments`.
-- **Completion Criteria:** Course offerings isolate student cohorts per semester.
+- **Files Affected:** `infra/migrations/012_create_programs_and_cohorts.sql`, `academic_service/models/orm.py`, `academic_service/models/schema.py`, `academic_service/services/timetable_service.py`, `academic_service/cmd/main.py`.
+- **Completion Criteria:** Course offerings isolate student cohorts per semester. Unit tests pass cleanly.
 
 #### PHASE 12 — Scheduling & Timetable Engine
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Implement physical and virtual lecture session scheduling, timetables, and academic calendars.
 - **Dependencies:** Phase 11.
+- **Current State:** Timetable engine in `timetable_service.py` supports querying upcoming lecture sessions by course offering or student user ID across customizable date windows, combining explicit lectures and recurring timetable slots with credit/audit awareness; endpoint `GET /api/v1/academic/timetable/sessions` active.
 - **Target State:** Class sessions have explicit timestamps, locations, recurrence, and lecturer assignments.
-- **Database Impact:** Create `zuri_academic.timetable_slots`, `zuri_academic.lecture_sessions`.
+- **Files Affected:** `academic_service/services/timetable_service.py`, `academic_service/models/schema.py`, `academic_service/cmd/main.py`, `academic_service/tests/test_enrollment_and_offerings.py`.
 - **Completion Criteria:** The system can query upcoming lectures for any student or lecturer for a given time window.
 
 #### PHASE 13 — Course Intelligence Core Entity
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Transform `Course` from an isolated personal folder into the primary academic intelligence hub.
 - **Dependencies:** Phases 11, 12.
+- **Current State:** `zuri_content.courses` enriched with `institution_id`, `code`, `course_offering_id`, `credit_units`, and `syllabus` in migration `013_enrich_course_intelligence.sql`; Go Content Service models and request types updated; verified via `TestCourseIntelligence_InstitutionalAndCohortBinding`.
 - **Target State:** The Course entity connects lecturers, students, materials, lectures, assessments, and concept graphs.
-- **Files Affected:** `services/content/internal/model/content.go`, `services/content/internal/service/`.
-- **Completion Criteria:** All academic assets link to a validated course offering.
+- **Files Affected:** `infra/migrations/013_enrich_course_intelligence.sql`, `infra/migrations/supabase/013_enrich_course_intelligence_zuri.sql`, `services/content/internal/model/content.go`, `services/content/internal/service/content_service.go`, `services/content/internal/service/content_service_test.go`.
+- **Completion Criteria:** All academic assets link to a validated course offering and institutional context.
+
 
 ---
 

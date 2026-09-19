@@ -112,19 +112,29 @@ func NewContentService(
 // Request/Response types
 
 type CreateCourseRequest struct {
-	Name        string `json:"name" validate:"required,max=255"`
-	Description string `json:"description"`
-	Color       string `json:"color"`
-	Semester    string `json:"semester"`
-	Year        int    `json:"year"`
+	InstitutionID    string `json:"institution_id,omitempty"`
+	Code             string `json:"code,omitempty"`
+	CourseOfferingID string `json:"course_offering_id,omitempty"`
+	Name             string `json:"name" validate:"required,max=255"`
+	Description      string `json:"description"`
+	Color            string `json:"color"`
+	Semester         string `json:"semester"`
+	Year             int    `json:"year"`
+	CreditUnits      int    `json:"credit_units,omitempty"`
+	Syllabus         string `json:"syllabus,omitempty"`
 }
 
 type UpdateCourseRequest struct {
-	Name        string `json:"name,omitempty" validate:"omitempty,max=255"`
-	Description string `json:"description,omitempty"`
-	Color       string `json:"color,omitempty"`
-	Semester    string `json:"semester,omitempty"`
-	Year        int    `json:"year,omitempty"`
+	InstitutionID    string `json:"institution_id,omitempty"`
+	Code             string `json:"code,omitempty"`
+	CourseOfferingID string `json:"course_offering_id,omitempty"`
+	Name             string `json:"name,omitempty" validate:"omitempty,max=255"`
+	Description      string `json:"description,omitempty"`
+	Color            string `json:"color,omitempty"`
+	Semester         string `json:"semester,omitempty"`
+	Year             int    `json:"year,omitempty"`
+	CreditUnits      int    `json:"credit_units,omitempty"`
+	Syllabus         string `json:"syllabus,omitempty"`
 }
 
 type CreateMaterialRequest struct {
@@ -215,13 +225,22 @@ type UpdateFlashcardRequest struct {
 // ==================== Course Operations ====================
 
 func (s *contentService) CreateCourse(ctx context.Context, userID uuid.UUID, req *CreateCourseRequest) (*model.Course, error) {
+	creditUnits := req.CreditUnits
+	if creditUnits <= 0 {
+		creditUnits = 3
+	}
 	course := &model.Course{
-		UserID:      userID,
-		Name:        req.Name,
-		Description: req.Description,
-		Color:       req.Color,
-		Semester:    req.Semester,
-		Year:        req.Year,
+		UserID:           userID,
+		InstitutionID:    req.InstitutionID,
+		Code:             req.Code,
+		CourseOfferingID: req.CourseOfferingID,
+		Name:             req.Name,
+		Description:      req.Description,
+		Color:            req.Color,
+		Semester:         req.Semester,
+		Year:             req.Year,
+		CreditUnits:      creditUnits,
+		Syllabus:         req.Syllabus,
 	}
 	if course.Color == "" {
 		course.Color = "#3B82F6"
@@ -254,6 +273,15 @@ func (s *contentService) UpdateCourse(ctx context.Context, userID uuid.UUID, cou
 		return nil, err
 	}
 	
+	if req.InstitutionID != "" {
+		course.InstitutionID = req.InstitutionID
+	}
+	if req.Code != "" {
+		course.Code = req.Code
+	}
+	if req.CourseOfferingID != "" {
+		course.CourseOfferingID = req.CourseOfferingID
+	}
 	if req.Name != "" {
 		course.Name = req.Name
 	}
@@ -268,6 +296,12 @@ func (s *contentService) UpdateCourse(ctx context.Context, userID uuid.UUID, cou
 	}
 	if req.Year != 0 {
 		course.Year = req.Year
+	}
+	if req.CreditUnits > 0 {
+		course.CreditUnits = req.CreditUnits
+	}
+	if req.Syllabus != "" {
+		course.Syllabus = req.Syllabus
 	}
 	
 	if err := s.courseRepo.Update(ctx, course); err != nil {

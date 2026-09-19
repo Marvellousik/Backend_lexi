@@ -643,3 +643,48 @@ func TestQuizQuestion_UUIDFix(t *testing.T) {
 		assert.ErrorIs(t, err, service.ErrQuestionNotFound)
 	})
 }
+
+func TestCourseIntelligence_InstitutionalAndCohortBinding(t *testing.T) {
+	tc := setupTestContext()
+	ctx := context.Background()
+	user := uuid.New()
+
+	req := &service.CreateCourseRequest{
+		InstitutionID:    "veritas_uni",
+		Code:             "CSC 301",
+		CourseOfferingID: "offering_csc301_2025_first",
+		Name:             "Data Structures and Algorithms",
+		Description:      "Core 300-level computer science course",
+		Color:            "#1E40AF",
+		Semester:         "2025/2026_FIRST",
+		Year:             2025,
+		CreditUnits:      3,
+		Syllabus:         `[{"topic": "Recursion", "subtopics": ["Base Cases", "Memoization"]}]`,
+	}
+
+	course, err := tc.svc.CreateCourse(ctx, user, req)
+	require.NoError(t, err)
+	require.NotNil(t, course)
+
+	assert.Equal(t, "veritas_uni", course.InstitutionID)
+	assert.Equal(t, "CSC 301", course.Code)
+	assert.Equal(t, "offering_csc301_2025_first", course.CourseOfferingID)
+	assert.Equal(t, 3, course.CreditUnits)
+	assert.Contains(t, course.Syllabus, "Recursion")
+
+	// Update syllabus and course offering
+	updateReq := &service.UpdateCourseRequest{
+		CourseOfferingID: "offering_csc301_2025_second",
+		CreditUnits:      4,
+		Syllabus:         `[{"topic": "Graphs", "subtopics": ["DFS", "BFS"]}]`,
+	}
+
+	updated, err := tc.svc.UpdateCourse(ctx, user, course.ID, updateReq)
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+
+	assert.Equal(t, "offering_csc301_2025_second", updated.CourseOfferingID)
+	assert.Equal(t, 4, updated.CreditUnits)
+	assert.Contains(t, updated.Syllabus, "Graphs")
+}
+
