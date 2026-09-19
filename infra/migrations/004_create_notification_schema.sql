@@ -1,13 +1,15 @@
 -- Migration: Create notification schema for Notification Service
 -- This migration sets up tables for push notifications, emails, and scheduling
+-- Unified canonical schema: zuri_notification with backward-compatible notification views
 
--- Create notification schema
+-- Create schemas
+CREATE SCHEMA IF NOT EXISTS zuri_notification;
 CREATE SCHEMA IF NOT EXISTS notification;
 
 -- Notification preferences per user
-CREATE TABLE IF NOT EXISTS notification.preferences (
+CREATE TABLE IF NOT EXISTS zuri_notification.preferences (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL UNIQUE REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
     
     -- Push notifications
     push_enabled BOOLEAN DEFAULT true,
@@ -34,12 +36,12 @@ CREATE TABLE IF NOT EXISTS notification.preferences (
 );
 
 -- Create index on user_id
-CREATE INDEX IF NOT EXISTS idx_notification_preferences_user_id ON notification.preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_notification_preferences_user_id ON zuri_notification.preferences(user_id);
 
 -- Notification queue (for immediate sending)
-CREATE TABLE IF NOT EXISTS notification.queue (
+CREATE TABLE IF NOT EXISTS zuri_notification.queue (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
     
     -- Notification details
     notification_type VARCHAR(50) NOT NULL, -- push, email
@@ -67,15 +69,15 @@ CREATE TABLE IF NOT EXISTS notification.queue (
 );
 
 -- Create indexes for notification queue
-CREATE INDEX IF NOT EXISTS idx_notification_queue_user_id ON notification.queue(user_id);
-CREATE INDEX IF NOT EXISTS idx_notification_queue_status ON notification.queue(status);
-CREATE INDEX IF NOT EXISTS idx_notification_queue_scheduled ON notification.queue(scheduled_at) WHERE status = 'pending';
-CREATE INDEX IF NOT EXISTS idx_notification_queue_created ON notification.queue(created_at);
+CREATE INDEX IF NOT EXISTS idx_notification_queue_user_id ON zuri_notification.queue(user_id);
+CREATE INDEX IF NOT EXISTS idx_notification_queue_status ON zuri_notification.queue(status);
+CREATE INDEX IF NOT EXISTS idx_notification_queue_scheduled ON zuri_notification.queue(scheduled_at) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_notification_queue_created ON zuri_notification.queue(created_at);
 
 -- Notification history (sent notifications archive)
-CREATE TABLE IF NOT EXISTS notification.history (
+CREATE TABLE IF NOT EXISTS zuri_notification.history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
     
     notification_type VARCHAR(50) NOT NULL,
     channel VARCHAR(50) NOT NULL,
@@ -92,13 +94,13 @@ CREATE TABLE IF NOT EXISTS notification.history (
 );
 
 -- Create indexes for history
-CREATE INDEX IF NOT EXISTS idx_notification_history_user_id ON notification.history(user_id);
-CREATE INDEX IF NOT EXISTS idx_notification_history_sent ON notification.history(sent_at);
+CREATE INDEX IF NOT EXISTS idx_notification_history_user_id ON zuri_notification.history(user_id);
+CREATE INDEX IF NOT EXISTS idx_notification_history_sent ON zuri_notification.history(sent_at);
 
 -- Scheduled reminders (for spaced repetition, study reminders)
-CREATE TABLE IF NOT EXISTS notification.scheduled_reminders (
+CREATE TABLE IF NOT EXISTS zuri_notification.scheduled_reminders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
     
     reminder_type VARCHAR(50) NOT NULL, -- study_reminder, quiz_reminder, review_reminder
     title VARCHAR(255) NOT NULL,
@@ -126,12 +128,12 @@ CREATE TABLE IF NOT EXISTS notification.scheduled_reminders (
 );
 
 -- Create indexes for scheduled reminders
-CREATE INDEX IF NOT EXISTS idx_scheduled_reminders_user_id ON notification.scheduled_reminders(user_id);
-CREATE INDEX IF NOT EXISTS idx_scheduled_reminders_scheduled ON notification.scheduled_reminders(scheduled_for) WHERE is_active = true AND sent_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_scheduled_reminders_entity ON notification.scheduled_reminders(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_reminders_user_id ON zuri_notification.scheduled_reminders(user_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_reminders_scheduled ON zuri_notification.scheduled_reminders(scheduled_for) WHERE is_active = true AND sent_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_scheduled_reminders_entity ON zuri_notification.scheduled_reminders(entity_type, entity_id);
 
 -- Function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION notification.update_updated_at_column()
+CREATE OR REPLACE FUNCTION zuri_notification.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
@@ -140,20 +142,20 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers for automatically updating updated_at
-DROP TRIGGER IF EXISTS update_notification_preferences_updated_at ON notification.preferences;
+DROP TRIGGER IF EXISTS update_notification_preferences_updated_at ON zuri_notification.preferences;
 CREATE TRIGGER update_notification_preferences_updated_at
-    BEFORE UPDATE ON notification.preferences
+    BEFORE UPDATE ON zuri_notification.preferences
     FOR EACH ROW
-    EXECUTE FUNCTION notification.update_updated_at_column();
+    EXECUTE FUNCTION zuri_notification.update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_scheduled_reminders_updated_at ON notification.scheduled_reminders;
+DROP TRIGGER IF EXISTS update_scheduled_reminders_updated_at ON zuri_notification.scheduled_reminders;
 CREATE TRIGGER update_scheduled_reminders_updated_at
-    BEFORE UPDATE ON notification.scheduled_reminders
+    BEFORE UPDATE ON zuri_notification.scheduled_reminders
     FOR EACH ROW
-    EXECUTE FUNCTION notification.update_updated_at_column();
+    EXECUTE FUNCTION zuri_notification.update_updated_at_column();
 
 -- View for pending notifications (to be picked up by worker)
-CREATE OR REPLACE VIEW notification.pending_notifications AS
+CREATE OR REPLACE VIEW zuri_notification.pending_notifications AS
 SELECT 
     q.*,
     p.push_enabled,
@@ -162,21 +164,29 @@ SELECT
     p.quiet_hours_end,
     p.timezone,
     u.email as user_email
-FROM notification.queue q
-JOIN notification.preferences p ON q.user_id = p.user_id
-JOIN auth.users u ON q.user_id = u.id
+FROM zuri_notification.queue q
+JOIN zuri_notification.preferences p ON q.user_id = p.user_id
+JOIN zuri_auth.users u ON q.user_id = u.id
 WHERE q.status = 'pending'
 AND q.scheduled_at <= CURRENT_TIMESTAMP;
 
 -- View for active reminders due for sending
-CREATE OR REPLACE VIEW notification.due_reminders AS
+CREATE OR REPLACE VIEW zuri_notification.due_reminders AS
 SELECT 
     r.*,
     p.timezone as user_timezone,
     p.push_enabled,
     p.email_enabled
-FROM notification.scheduled_reminders r
-JOIN notification.preferences p ON r.user_id = p.user_id
+FROM zuri_notification.scheduled_reminders r
+JOIN zuri_notification.preferences p ON r.user_id = p.user_id
 WHERE r.is_active = true
 AND r.sent_at IS NULL
 AND r.scheduled_for <= CURRENT_TIMESTAMP;
+
+-- Backward compatibility views for legacy or external callers expecting notification.*
+CREATE OR REPLACE VIEW notification.preferences AS SELECT * FROM zuri_notification.preferences;
+CREATE OR REPLACE VIEW notification.queue AS SELECT * FROM zuri_notification.queue;
+CREATE OR REPLACE VIEW notification.history AS SELECT * FROM zuri_notification.history;
+CREATE OR REPLACE VIEW notification.scheduled_reminders AS SELECT * FROM zuri_notification.scheduled_reminders;
+CREATE OR REPLACE VIEW notification.pending_notifications AS SELECT * FROM zuri_notification.pending_notifications;
+CREATE OR REPLACE VIEW notification.due_reminders AS SELECT * FROM zuri_notification.due_reminders;

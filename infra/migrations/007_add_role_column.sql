@@ -1,20 +1,21 @@
 -- Migration: Add role column to users table for RBAC
 -- Created: 2026-04-03
+-- Target: zuri_auth.users
 
 -- Add role column with default 'student'
-ALTER TABLE auth.users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'student';
+ALTER TABLE zuri_auth.users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'student';
 
 -- Create index for role lookups
-CREATE INDEX IF NOT EXISTS idx_users_role ON auth.users(role);
+CREATE INDEX IF NOT EXISTS idx_users_role ON zuri_auth.users(role);
 
 -- Add check constraint for valid roles
-ALTER TABLE auth.users DROP CONSTRAINT IF EXISTS chk_user_role;
-ALTER TABLE auth.users ADD CONSTRAINT chk_user_role 
+ALTER TABLE zuri_auth.users DROP CONSTRAINT IF EXISTS chk_user_role;
+ALTER TABLE zuri_auth.users ADD CONSTRAINT chk_user_role 
     CHECK (role IN ('student', 'instructor', 'admin', 'super_admin'));
 
 -- Create super admin user for development
 -- Password: SuperAdmin123! (bcrypt hash)
-INSERT INTO auth.users (
+INSERT INTO zuri_auth.users (
     id, 
     email, 
     password_hash, 
@@ -45,7 +46,7 @@ INSERT INTO auth.users (
     updated_at = NOW();
 
 -- Also create a regular test user
-INSERT INTO auth.users (
+INSERT INTO zuri_auth.users (
     id, 
     email, 
     password_hash, 
@@ -74,4 +75,4 @@ INSERT INTO auth.users (
     is_active = true,
     updated_at = NOW();
 
-COMMENT ON COLUMN auth.users.role IS 'User role: student, instructor, admin, super_admin';
+COMMENT ON COLUMN zuri_auth.users.role IS 'User role: student, instructor, admin, super_admin';

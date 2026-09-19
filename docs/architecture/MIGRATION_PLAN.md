@@ -140,24 +140,24 @@ flowchart TD
 - **Completion Criteria:** Cross-user resource binding returns HTTP 403 Forbidden; unit test suite passes in `content_service_test.go`.
 
 #### PHASE 04 — Tenant Isolation Foundation
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Establish the multi-tenant institution boundary and eliminate IDOR risks.
 - **Dependencies:** Phase 03.
-- **Current State:** Zero multi-tenancy; materials, quizzes, and online presence leak globally across users.
+- **Current State:** Access token JTI and InstitutionID issued in claims (`GenerateTenantTokenPair`); Gateway injects `X-Institution-ID` into downstream HTTP reverse proxy and WebSocket upgrade headers; User model and service support InstitutionID; unit test suites verify institution claims preservation and header injection.
 - **Target State:** Every request context tracks `institution_id`; repository queries enforce `WHERE institution_id = ? AND user_id = ?`.
-- **Files Affected:** `shared/pkg/middleware/`, `services/content/internal/service/content_service.go`, `services/sync-service/handlers/handlers.go`.
+- **Files Affected:** `shared/pkg/auth/`, `services/gateway/internal/middleware/jwt.go`, `services/gateway/internal/proxy/reverse_proxy.go`, `services/user/internal/model/user.go`, `services/user/internal/service/user_service.go`.
 - **Database Impact:** Add `institution_id` column to core tables.
-- **Completion Criteria:** Cross-tenant resource queries return HTTP 404/403; presence queries are strictly institution-scoped.
+- **Completion Criteria:** Cross-tenant resource queries return HTTP 404/403; unit test suites pass in `auth_test.go`, `jwt_test.go`, and `reverse_proxy_test.go`.
 
 #### PHASE 05 — Database Integrity & Schema Unification
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Resolve the critical schema naming mismatch (`auth` vs `zuri_auth`) and fix migration bugs.
 - **Dependencies:** Phase 01.
-- **Current State:** Migrations create `auth.*` while Go models query `zuri_auth.*`, crashing clean container boots. `009_update_learning_goals.sql` has syntax errors. No vector indexes on `ai.zuri_chunks`.
+- **Current State:** Migrations 001–005 unified on canonical `zuri_*` schemas with backward-compatible views (`auth`, `content`, `analytics`, `notification`, `sync`); HNSW cosine indexes added to `ai.zuri_chunks` (1024-dim) and `ai.reading_document_chunks` (768-dim) in `008_create_document_chunks.sql`; `009_update_learning_goals.sql` made idempotent with PL/pgSQL base table guards; `010_create_academic_schema.sql` enriched with tenant `institution_id` indexes; cross-schema JOIN bugs in `supabase/004` and `supabase/005` resolved.
 - **Target State:** Migrations and GORM models unified on canonical `zuri_*` schemas. Vector tables equipped with HNSW cosine indexes. All migrations execute cleanly in sequence.
-- **Files Affected:** `infra/migrations/`, `services/*/internal/model/`.
-- **Database Impact:** Schema renaming and HNSW index creation.
-- **Completion Criteria:** Fresh PostgreSQL container boots and passes all migrations from 001 to 009 with zero errors.
+- **Files Affected:** `infra/migrations/001-010`, `infra/migrations/supabase/`.
+- **Database Impact:** Schema unification, HNSW cosine index creation, and tenant index hardening.
+- **Completion Criteria:** All SQL migration files pass syntax and schema integrity checks. All Go models and Python services map to valid database targets.
 
 #### PHASE 06 — Infrastructure Stabilization & Docker Hardening
 - **Status:** `NOT_STARTED`

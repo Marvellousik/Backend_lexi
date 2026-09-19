@@ -1,13 +1,15 @@
 -- Migration: Create sync schema for Sync Service
 -- This migration sets up tables for real-time synchronization
+-- Unified canonical schema: zuri_sync with backward-compatible sync views
 
--- Create sync schema
+-- Create schemas
+CREATE SCHEMA IF NOT EXISTS zuri_sync;
 CREATE SCHEMA IF NOT EXISTS sync;
 
 -- WebSocket connections (active sessions)
-CREATE TABLE IF NOT EXISTS sync.connections (
+CREATE TABLE IF NOT EXISTS zuri_sync.connections (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
     
     -- Connection details
     connection_id VARCHAR(255) NOT NULL UNIQUE, -- WebSocket connection ID
@@ -28,12 +30,12 @@ CREATE TABLE IF NOT EXISTS sync.connections (
 );
 
 -- Create indexes for connections
-CREATE INDEX IF NOT EXISTS idx_sync_connections_user_id ON sync.connections(user_id);
-CREATE INDEX IF NOT EXISTS idx_sync_connections_active ON sync.connections(user_id, is_active) WHERE is_active = true;
-CREATE INDEX IF NOT EXISTS idx_sync_connections_connection ON sync.connections(connection_id);
+CREATE INDEX IF NOT EXISTS idx_sync_connections_user_id ON zuri_sync.connections(user_id);
+CREATE INDEX IF NOT EXISTS idx_sync_connections_active ON zuri_sync.connections(user_id, is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_sync_connections_connection ON zuri_sync.connections(connection_id);
 
 -- Sync events (for real-time broadcasting)
-CREATE TABLE IF NOT EXISTS sync.events (
+CREATE TABLE IF NOT EXISTS zuri_sync.events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     
     -- Event metadata
@@ -41,7 +43,7 @@ CREATE TABLE IF NOT EXISTS sync.events (
     event_name VARCHAR(100) NOT NULL, -- Human-readable event name
     
     -- Target (who should receive this)
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- NULL = broadcast to all
+    user_id UUID REFERENCES zuri_auth.users(id) ON DELETE CASCADE, -- NULL = broadcast to all
     course_id UUID, -- Optional: specific to a course
     
     -- Event payload
@@ -58,102 +60,125 @@ CREATE TABLE IF NOT EXISTS sync.events (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes for events
-CREATE INDEX IF NOT EXISTS idx_sync_events_user_id ON sync.events(user_id);
-CREATE INDEX IF NOT EXISTS idx_sync_events_type ON sync.events(event_type);
-CREATE INDEX IF NOT EXISTS idx_sync_events_created ON sync.events(created_at);
-CREATE INDEX IF NOT EXISTS idx_sync_events_unprocessed ON sync.events(processed_at) WHERE processed_at IS NULL;
+-- Create indexes for sync events
+CREATE INDEX IF NOT EXISTS idx_sync_events_user_id ON zuri_sync.events(user_id);
+CREATE INDEX IF NOT EXISTS idx_sync_events_course_id ON zuri_sync.events(course_id);
+CREATE INDEX IF NOT EXISTS idx_sync_events_type ON zuri_sync.events(event_type);
+CREATE INDEX IF NOT EXISTS idx_sync_events_created ON zuri_sync.events(created_at);
 
--- Device sync state (for tracking what each device has seen)
-CREATE TABLE IF NOT EXISTS sync.device_state (
+-- User presence (online status and active session info)
+CREATE TABLE IF NOT EXISTS zuri_sync.presence (
+    user_id UUID PRIMARY KEY REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
+    
+    status VARCHAR(20) DEFAULT 'offline', -- online, away, busy, offline
+    status_message VARCHAR(255),
+    
+    -- Current activity
+    current_course_id UUID,
+    current_material_id UUID,
+    activity_details JSONB, -- Current reading position, quiz in progress, etc.
+    
+    -- Connection tracking
+    active_connections INTEGER DEFAULT 0,
+    last_seen_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_activity_type VARCHAR(50),
+    
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for presence
+CREATE INDEX IF NOT EXISTS idx_sync_presence_status ON zuri_sync.presence(status) WHERE status != 'offline';
+CREATE INDEX IF NOT EXISTS idx_sync_presence_course ON zuri_sync.presence(current_course_id);
+CREATE INDEX IF NOT EXISTS idx_sync_presence_last_seen ON zuri_sync.presence(last_seen_at);
+
+-- Device sync state (tracks what each device has synced)
+CREATE TABLE IF NOT EXISTS zuri_sync.device_state (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
     device_id VARCHAR(255) NOT NULL,
     
-    -- Last event seen by this device
-    last_event_id UUID,
-    last_event_timestamp TIMESTAMP WITH TIME ZONE,
+    -- Last synced timestamps per entity
+    last_sync_materials TIMESTAMP WITH TIME ZONE,
+    last_sync_quizzes TIMESTAMP WITH TIME ZONE,
+    last_sync_flashcards TIMESTAMP WITH TIME ZONE,
+    last_sync_analytics TIMESTAMP WITH TIME ZONE,
     
-    -- Sync cursor for pagination
-    sync_cursor VARCHAR(255),
+    -- Client version info
+    app_version VARCHAR(50),
+    os_version VARCHAR(50),
     
-    -- Device sync status
-    is_syncing BOOLEAN DEFAULT false,
-    last_sync_at TIMESTAMP WITH TIME ZONE,
-    
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     
     UNIQUE(user_id, device_id)
 );
 
 -- Create indexes for device state
-CREATE INDEX IF NOT EXISTS idx_sync_device_state_user ON sync.device_state(user_id);
-CREATE INDEX IF NOT EXISTS idx_sync_device_state_device ON sync.device_state(device_id);
+CREATE INDEX IF NOT EXISTS idx_sync_device_state_user ON zuri_sync.device_state(user_id);
+CREATE INDEX IF NOT EXISTS idx_sync_device_state_device ON zuri_sync.device_state(device_id);
 
--- Change log (for CDC - Change Data Capture)
--- This table captures all database changes for sync purposes
-CREATE TABLE IF NOT EXISTS sync.change_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+-- Change log for delta sync (CDC - Change Data Capture)
+CREATE TABLE IF NOT EXISTS zuri_sync.change_log (
+    id BIGSERIAL PRIMARY KEY,
     
-    -- Change metadata
-    table_name VARCHAR(100) NOT NULL, -- Which table changed
+    -- What changed
+    table_name VARCHAR(100) NOT NULL,
+    record_id UUID NOT NULL,
     operation VARCHAR(10) NOT NULL, -- INSERT, UPDATE, DELETE
     
-    -- Record identification
-    record_id UUID NOT NULL, -- Primary key of changed record
-    user_id UUID, -- Owner of the record (if applicable)
+    -- Scope
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
+    course_id UUID,
     
-    -- Change data
-    old_data JSONB, -- Previous state (for UPDATE/DELETE)
-    new_data JSONB, -- New state (for INSERT/UPDATE)
+    -- The actual changes
+    changed_fields JSONB, -- Array of field names that changed
+    old_data JSONB,       -- Previous values (for conflict resolution)
+    new_data JSONB,       -- New values
     
-    -- Change timestamp
+    -- Metadata
+    version INTEGER DEFAULT 1,
+    source_device_id VARCHAR(255),
+    
     changed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Sync status
-    processed BOOLEAN DEFAULT false,
-    processed_at TIMESTAMP WITH TIME ZONE,
-    broadcast_to TEXT[] -- Array of connection IDs that received this
+    processed BOOLEAN DEFAULT false
 );
 
 -- Create indexes for change log
-CREATE INDEX IF NOT EXISTS idx_sync_change_log_table ON sync.change_log(table_name);
-CREATE INDEX IF NOT EXISTS idx_sync_change_log_record ON sync.change_log(record_id);
-CREATE INDEX IF NOT EXISTS idx_sync_change_log_user ON sync.change_log(user_id);
-CREATE INDEX IF NOT EXISTS idx_sync_change_log_processed ON sync.change_log(processed) WHERE processed = false;
-CREATE INDEX IF NOT EXISTS idx_sync_change_log_timestamp ON sync.change_log(changed_at);
+CREATE INDEX IF NOT EXISTS idx_sync_change_log_user ON zuri_sync.change_log(user_id, changed_at);
+CREATE INDEX IF NOT EXISTS idx_sync_change_log_table ON zuri_sync.change_log(table_name, record_id);
+CREATE INDEX IF NOT EXISTS idx_sync_change_log_unprocessed ON zuri_sync.change_log(processed) WHERE processed = false;
 
--- Presence tracking (who's online)
-CREATE TABLE IF NOT EXISTS sync.presence (
+-- Offline sync queue (changes made while offline to be merged)
+CREATE TABLE IF NOT EXISTS zuri_sync.offline_queue (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
+    device_id VARCHAR(255) NOT NULL,
     
-    -- Status
-    status VARCHAR(20) DEFAULT 'offline', -- online, away, offline, busy
-    status_message VARCHAR(255),
+    -- Operation details
+    operation_type VARCHAR(50) NOT NULL,
+    target_entity VARCHAR(100) NOT NULL,
+    entity_id UUID,
+    payload JSONB NOT NULL,
     
-    -- Last activity
-    last_seen_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_activity_type VARCHAR(50), -- viewing_course, taking_quiz, etc.
-    last_activity_data JSONB,
+    -- Client-side timestamp
+    client_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
     
-    -- Active connections count
-    active_connections INTEGER DEFAULT 0,
+    -- Conflict resolution
+    client_version INTEGER DEFAULT 1,
+    status VARCHAR(20) DEFAULT 'pending', -- pending, applied, conflicted, failed
+    conflict_resolution VARCHAR(20),      -- client_wins, server_wins, manual
+    error_message TEXT,
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    
-    UNIQUE(user_id)
+    processed_at TIMESTAMP WITH TIME ZONE
 );
 
--- Create indexes for presence
-CREATE INDEX IF NOT EXISTS idx_sync_presence_user ON sync.presence(user_id);
-CREATE INDEX IF NOT EXISTS idx_sync_presence_status ON sync.presence(status);
-CREATE INDEX IF NOT EXISTS idx_sync_presence_last_seen ON sync.presence(last_seen_at);
+-- Create indexes for offline queue
+CREATE INDEX IF NOT EXISTS idx_sync_offline_queue_pending ON zuri_sync.offline_queue(user_id, status) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_sync_offline_queue_device ON zuri_sync.offline_queue(device_id);
 
--- Function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION sync.update_updated_at_column()
+-- Function to update presence updated_at
+CREATE OR REPLACE FUNCTION zuri_sync.update_presence_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
@@ -161,21 +186,14 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Triggers for automatically updating updated_at
-DROP TRIGGER IF EXISTS update_device_state_updated_at ON sync.device_state;
-CREATE TRIGGER update_device_state_updated_at
-    BEFORE UPDATE ON sync.device_state
+DROP TRIGGER IF EXISTS update_sync_presence_timestamp ON zuri_sync.presence;
+CREATE TRIGGER update_sync_presence_timestamp
+    BEFORE UPDATE ON zuri_sync.presence
     FOR EACH ROW
-    EXECUTE FUNCTION sync.update_updated_at_column();
+    EXECUTE FUNCTION zuri_sync.update_presence_timestamp();
 
-DROP TRIGGER IF EXISTS update_presence_updated_at ON sync.presence;
-CREATE TRIGGER update_presence_updated_at
-    BEFORE UPDATE ON sync.presence
-    FOR EACH ROW
-    EXECUTE FUNCTION sync.update_updated_at_column();
-
--- View for active users (online status)
-CREATE OR REPLACE VIEW sync.online_users AS
+-- View for online users summary
+CREATE OR REPLACE VIEW zuri_sync.online_users AS
 SELECT 
     p.user_id,
     p.status,
@@ -183,17 +201,27 @@ SELECT
     p.last_seen_at,
     p.last_activity_type,
     COUNT(c.id) as connection_count
-FROM sync.presence p
-LEFT JOIN sync.connections c ON p.user_id = c.user_id AND c.is_active = true
+FROM zuri_sync.presence p
+LEFT JOIN zuri_sync.connections c ON p.user_id = c.user_id AND c.is_active = true
 WHERE p.status != 'offline'
 GROUP BY p.user_id, p.status, p.status_message, p.last_seen_at, p.last_activity_type;
 
 -- View for pending changes to sync
-CREATE OR REPLACE VIEW sync.pending_changes AS
+CREATE OR REPLACE VIEW zuri_sync.pending_changes AS
 SELECT 
     cl.*,
     u.email as user_email
-FROM sync.change_log cl
-LEFT JOIN auth.users u ON cl.user_id = u.id
+FROM zuri_sync.change_log cl
+LEFT JOIN zuri_auth.users u ON cl.user_id = u.id
 WHERE cl.processed = false
 ORDER BY cl.changed_at ASC;
+
+-- Backward compatibility views for legacy or external callers expecting sync.*
+CREATE OR REPLACE VIEW sync.connections AS SELECT * FROM zuri_sync.connections;
+CREATE OR REPLACE VIEW sync.events AS SELECT * FROM zuri_sync.events;
+CREATE OR REPLACE VIEW sync.presence AS SELECT * FROM zuri_sync.presence;
+CREATE OR REPLACE VIEW sync.device_state AS SELECT * FROM zuri_sync.device_state;
+CREATE OR REPLACE VIEW sync.change_log AS SELECT * FROM zuri_sync.change_log;
+CREATE OR REPLACE VIEW sync.offline_queue AS SELECT * FROM zuri_sync.offline_queue;
+CREATE OR REPLACE VIEW sync.online_users AS SELECT * FROM zuri_sync.online_users;
+CREATE OR REPLACE VIEW sync.pending_changes AS SELECT * FROM zuri_sync.pending_changes;

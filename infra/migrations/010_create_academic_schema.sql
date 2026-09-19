@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS academic.departments (
     code VARCHAR NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_academic_depts_faculty ON academic.departments(faculty_id);
+CREATE INDEX IF NOT EXISTS idx_academic_depts_inst ON academic.departments(institution_id);
 
 -- 4. Courses
 CREATE TABLE IF NOT EXISTS academic.courses (
@@ -49,6 +50,7 @@ CREATE TABLE IF NOT EXISTS academic.courses (
 );
 CREATE INDEX IF NOT EXISTS idx_academic_courses_dept ON academic.courses(department_id);
 CREATE INDEX IF NOT EXISTS idx_academic_courses_code ON academic.courses(institution_id, code);
+CREATE INDEX IF NOT EXISTS idx_academic_courses_inst ON academic.courses(institution_id);
 
 -- 5. Course Schedules (Timetable)
 CREATE TABLE IF NOT EXISTS academic.course_schedules (
@@ -63,6 +65,7 @@ CREATE TABLE IF NOT EXISTS academic.course_schedules (
 );
 CREATE INDEX IF NOT EXISTS idx_academic_schedules_course ON academic.course_schedules(course_id);
 CREATE INDEX IF NOT EXISTS idx_academic_schedules_day ON academic.course_schedules(day_of_week);
+CREATE INDEX IF NOT EXISTS idx_academic_schedules_inst ON academic.course_schedules(institution_id);
 
 -- 6. Student Enrollments
 CREATE TABLE IF NOT EXISTS academic.student_enrollments (

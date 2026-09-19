@@ -1,13 +1,15 @@
 -- Migration: Create content schema for Content Service
 -- This migration sets up tables for courses, materials, quizzes, and flashcards
+-- Unified canonical schema: zuri_content with backward-compatible content views
 
--- Create content schema
+-- Create schemas
+CREATE SCHEMA IF NOT EXISTS zuri_content;
 CREATE SCHEMA IF NOT EXISTS content;
 
 -- Courses table
-CREATE TABLE IF NOT EXISTS content.courses (
+CREATE TABLE IF NOT EXISTS zuri_content.courses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     color VARCHAR(7) DEFAULT '#3B82F6',
@@ -20,14 +22,14 @@ CREATE TABLE IF NOT EXISTS content.courses (
 );
 
 -- Create indexes for courses
-CREATE INDEX IF NOT EXISTS idx_courses_user_id ON content.courses(user_id);
-CREATE INDEX IF NOT EXISTS idx_courses_deleted_at ON content.courses(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_courses_user_id ON zuri_content.courses(user_id);
+CREATE INDEX IF NOT EXISTS idx_courses_deleted_at ON zuri_content.courses(deleted_at);
 
 -- Materials (files) table
-CREATE TABLE IF NOT EXISTS content.materials (
+CREATE TABLE IF NOT EXISTS zuri_content.materials (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    course_id UUID REFERENCES content.courses(id) ON DELETE SET NULL,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
+    course_id UUID REFERENCES zuri_content.courses(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     file_url VARCHAR(500),
     file_size BIGINT,
@@ -41,17 +43,17 @@ CREATE TABLE IF NOT EXISTS content.materials (
 );
 
 -- Create indexes for materials
-CREATE INDEX IF NOT EXISTS idx_materials_user_id ON content.materials(user_id);
-CREATE INDEX IF NOT EXISTS idx_materials_course_id ON content.materials(course_id);
-CREATE INDEX IF NOT EXISTS idx_materials_processing_status ON content.materials(processing_status);
-CREATE INDEX IF NOT EXISTS idx_materials_deleted_at ON content.materials(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_materials_user_id ON zuri_content.materials(user_id);
+CREATE INDEX IF NOT EXISTS idx_materials_course_id ON zuri_content.materials(course_id);
+CREATE INDEX IF NOT EXISTS idx_materials_processing_status ON zuri_content.materials(processing_status);
+CREATE INDEX IF NOT EXISTS idx_materials_deleted_at ON zuri_content.materials(deleted_at);
 
 -- Quizzes table
-CREATE TABLE IF NOT EXISTS content.quizzes (
+CREATE TABLE IF NOT EXISTS zuri_content.quizzes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    course_id UUID REFERENCES content.courses(id) ON DELETE CASCADE,
-    material_id UUID REFERENCES content.materials(id) ON DELETE SET NULL,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
+    course_id UUID REFERENCES zuri_content.courses(id) ON DELETE CASCADE,
+    material_id UUID REFERENCES zuri_content.materials(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
     time_limit_minutes INTEGER,
@@ -63,67 +65,66 @@ CREATE TABLE IF NOT EXISTS content.quizzes (
 );
 
 -- Create indexes for quizzes
-CREATE INDEX IF NOT EXISTS idx_quizzes_user_id ON content.quizzes(user_id);
-CREATE INDEX IF NOT EXISTS idx_quizzes_course_id ON content.quizzes(course_id);
-CREATE INDEX IF NOT EXISTS idx_quizzes_material_id ON content.quizzes(material_id);
-CREATE INDEX IF NOT EXISTS idx_quizzes_deleted_at ON content.quizzes(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_quizzes_user_id ON zuri_content.quizzes(user_id);
+CREATE INDEX IF NOT EXISTS idx_quizzes_course_id ON zuri_content.quizzes(course_id);
+CREATE INDEX IF NOT EXISTS idx_quizzes_material_id ON zuri_content.quizzes(material_id);
+CREATE INDEX IF NOT EXISTS idx_quizzes_deleted_at ON zuri_content.quizzes(deleted_at);
 
 -- Quiz questions table
-CREATE TABLE IF NOT EXISTS content.quiz_questions (
+CREATE TABLE IF NOT EXISTS zuri_content.quiz_questions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    quiz_id UUID NOT NULL REFERENCES content.quizzes(id) ON DELETE CASCADE,
+    quiz_id UUID NOT NULL REFERENCES zuri_content.quizzes(id) ON DELETE CASCADE,
+    question_type VARCHAR(20) NOT NULL, -- multiple_choice, true_false, short_answer
     question_text TEXT NOT NULL,
-    question_type VARCHAR(20), -- multiple_choice, short_answer, true_false
-    options JSONB, -- for multiple choice: [{"text": "A", "is_correct": true}, ...]
-    correct_answer TEXT,
+    options JSONB, -- Array of options for multiple choice
+    correct_answer TEXT NOT NULL,
     explanation TEXT,
     points INTEGER DEFAULT 1,
-    order_index INTEGER,
-    difficulty VARCHAR(20),
+    order_index INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes for quiz questions
-CREATE INDEX IF NOT EXISTS idx_quiz_questions_quiz_id ON content.quiz_questions(quiz_id);
-CREATE INDEX IF NOT EXISTS idx_quiz_questions_order_index ON content.quiz_questions(quiz_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_quiz_questions_quiz_id ON zuri_content.quiz_questions(quiz_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_questions_order ON zuri_content.quiz_questions(quiz_id, order_index);
 
 -- Flashcard decks table
-CREATE TABLE IF NOT EXISTS content.flashcard_decks (
+CREATE TABLE IF NOT EXISTS zuri_content.flashcard_decks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    course_id UUID REFERENCES content.courses(id) ON DELETE CASCADE,
-    material_id UUID REFERENCES content.materials(id) ON DELETE SET NULL,
+    user_id UUID NOT NULL REFERENCES zuri_auth.users(id) ON DELETE CASCADE,
+    course_id UUID REFERENCES zuri_content.courses(id) ON DELETE CASCADE,
+    material_id UUID REFERENCES zuri_content.materials(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    card_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Create indexes for flashcard decks
-CREATE INDEX IF NOT EXISTS idx_flashcard_decks_user_id ON content.flashcard_decks(user_id);
-CREATE INDEX IF NOT EXISTS idx_flashcard_decks_course_id ON content.flashcard_decks(course_id);
-CREATE INDEX IF NOT EXISTS idx_flashcard_decks_deleted_at ON content.flashcard_decks(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_flashcard_decks_user_id ON zuri_content.flashcard_decks(user_id);
+CREATE INDEX IF NOT EXISTS idx_flashcard_decks_course_id ON zuri_content.flashcard_decks(course_id);
+CREATE INDEX IF NOT EXISTS idx_flashcard_decks_deleted_at ON zuri_content.flashcard_decks(deleted_at);
 
 -- Flashcards table
-CREATE TABLE IF NOT EXISTS content.flashcards (
+CREATE TABLE IF NOT EXISTS zuri_content.flashcards (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    deck_id UUID NOT NULL REFERENCES content.flashcard_decks(id) ON DELETE CASCADE,
-    front_text TEXT NOT NULL,
-    back_text TEXT NOT NULL,
-    difficulty VARCHAR(20),
-    order_index INTEGER,
+    deck_id UUID NOT NULL REFERENCES zuri_content.flashcard_decks(id) ON DELETE CASCADE,
+    front TEXT NOT NULL,
+    back TEXT NOT NULL,
+    order_index INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes for flashcards
-CREATE INDEX IF NOT EXISTS idx_flashcards_deck_id ON content.flashcards(deck_id);
-CREATE INDEX IF NOT EXISTS idx_flashcards_order_index ON content.flashcards(deck_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_flashcards_deck_id ON zuri_content.flashcards(deck_id);
+CREATE INDEX IF NOT EXISTS idx_flashcards_order ON zuri_content.flashcards(deck_id, order_index);
 
 -- Function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION content.update_updated_at_column()
+CREATE OR REPLACE FUNCTION zuri_content.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
@@ -131,39 +132,47 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Triggers for automatically updating updated_at
-DROP TRIGGER IF EXISTS update_courses_updated_at ON content.courses;
+-- Triggers to automatically update updated_at
+DROP TRIGGER IF EXISTS update_courses_updated_at ON zuri_content.courses;
 CREATE TRIGGER update_courses_updated_at
-    BEFORE UPDATE ON content.courses
+    BEFORE UPDATE ON zuri_content.courses
     FOR EACH ROW
-    EXECUTE FUNCTION content.update_updated_at_column();
+    EXECUTE FUNCTION zuri_content.update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_materials_updated_at ON content.materials;
+DROP TRIGGER IF EXISTS update_materials_updated_at ON zuri_content.materials;
 CREATE TRIGGER update_materials_updated_at
-    BEFORE UPDATE ON content.materials
+    BEFORE UPDATE ON zuri_content.materials
     FOR EACH ROW
-    EXECUTE FUNCTION content.update_updated_at_column();
+    EXECUTE FUNCTION zuri_content.update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_quizzes_updated_at ON content.quizzes;
+DROP TRIGGER IF EXISTS update_quizzes_updated_at ON zuri_content.quizzes;
 CREATE TRIGGER update_quizzes_updated_at
-    BEFORE UPDATE ON content.quizzes
+    BEFORE UPDATE ON zuri_content.quizzes
     FOR EACH ROW
-    EXECUTE FUNCTION content.update_updated_at_column();
+    EXECUTE FUNCTION zuri_content.update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_quiz_questions_updated_at ON content.quiz_questions;
+DROP TRIGGER IF EXISTS update_quiz_questions_updated_at ON zuri_content.quiz_questions;
 CREATE TRIGGER update_quiz_questions_updated_at
-    BEFORE UPDATE ON content.quiz_questions
+    BEFORE UPDATE ON zuri_content.quiz_questions
     FOR EACH ROW
-    EXECUTE FUNCTION content.update_updated_at_column();
+    EXECUTE FUNCTION zuri_content.update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_flashcard_decks_updated_at ON content.flashcard_decks;
+DROP TRIGGER IF EXISTS update_flashcard_decks_updated_at ON zuri_content.flashcard_decks;
 CREATE TRIGGER update_flashcard_decks_updated_at
-    BEFORE UPDATE ON content.flashcard_decks
+    BEFORE UPDATE ON zuri_content.flashcard_decks
     FOR EACH ROW
-    EXECUTE FUNCTION content.update_updated_at_column();
+    EXECUTE FUNCTION zuri_content.update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_flashcards_updated_at ON content.flashcards;
+DROP TRIGGER IF EXISTS update_flashcards_updated_at ON zuri_content.flashcards;
 CREATE TRIGGER update_flashcards_updated_at
-    BEFORE UPDATE ON content.flashcards
+    BEFORE UPDATE ON zuri_content.flashcards
     FOR EACH ROW
-    EXECUTE FUNCTION content.update_updated_at_column();
+    EXECUTE FUNCTION zuri_content.update_updated_at_column();
+
+-- Backward compatibility views for legacy or external callers expecting content.*
+CREATE OR REPLACE VIEW content.courses AS SELECT * FROM zuri_content.courses;
+CREATE OR REPLACE VIEW content.materials AS SELECT * FROM zuri_content.materials;
+CREATE OR REPLACE VIEW content.quizzes AS SELECT * FROM zuri_content.quizzes;
+CREATE OR REPLACE VIEW content.quiz_questions AS SELECT * FROM zuri_content.quiz_questions;
+CREATE OR REPLACE VIEW content.flashcard_decks AS SELECT * FROM zuri_content.flashcard_decks;
+CREATE OR REPLACE VIEW content.flashcards AS SELECT * FROM zuri_content.flashcards;
