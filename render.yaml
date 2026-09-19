@@ -62,30 +62,15 @@ services:
           type: pserv
           name: zuri-sync-service
           property: hostport
-      - key: AI_ORCHESTRATOR_URL
+      - key: ACADEMIC_SERVICE_URL
         fromService:
           type: pserv
-          name: zuri-ai-orchestrator
-          property: hostport
-      - key: RETRIEVAL_SERVICE_URL
-        fromService:
-          type: pserv
-          name: zuri-retrieval-service
-          property: hostport
-      - key: AUDIO_SERVICE_URL
-        fromService:
-          type: pserv
-          name: zuri-audio-service
-          property: hostport
-      - key: INGESTION_SERVICE_URL
-        fromService:
-          type: pserv
-          name: zuri-ingestion-service
+          name: zuri-academic-service
           property: hostport
       - key: AI_SERVICE_URL
         fromService:
           type: pserv
-          name: zuri-ai-monolith
+          name: zuri-ai-service
           property: hostport
       - key: AI_SERVICE_TIMEOUT
         value: 120s
@@ -253,106 +238,18 @@ services:
   # ---------------------------------------------------------------------------
   # Python AI Services (Private)
   # ---------------------------------------------------------------------------
+  # Academic Context & Intelligence Service (Private)
+  # ---------------------------------------------------------------------------
   - type: pserv
-    name: zuri-ai-orchestrator
+    name: zuri-academic-service
     runtime: docker
     rootDir: .
-    dockerfilePath: ./zuri-Python Services/services/orchestrator/Dockerfile
-    dockerContext: ./zuri-Python Services/services/orchestrator
+    dockerfilePath: ./academic_service/Dockerfile
+    dockerContext: .
     plan: starter
     envVars:
       - key: PORT
-        value: 5005
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: INTERNAL_API_KEY
-        fromService:
-          type: web
-          name: zuri-gateway
-          envVarKey: INTERNAL_API_KEY
-      - key: DEFAULT_MODEL
-        value: gemini-2.5-flash
-      - key: ALLOWED_ORIGINS
-        value: https://zuri.vercel.app,https://app.zuri.app
-
-  - type: pserv
-    name: zuri-ingestion-service
-    runtime: docker
-    rootDir: .
-    dockerfilePath: ./zuri-Python Services/services/ingestion/Dockerfile
-    dockerContext: ./zuri-Python Services/services/ingestion
-    plan: starter
-    envVars:
-      - key: PORT
-        value: 5002
-      - key: INTERNAL_API_KEY
-        fromService:
-          type: web
-          name: zuri-gateway
-          envVarKey: INTERNAL_API_KEY
-
-  - type: pserv
-    name: zuri-retrieval-service
-    runtime: docker
-    rootDir: .
-    dockerfilePath: ./zuri-Python Services/services/retrieval/Dockerfile
-    dockerContext: ./zuri-Python Services/services/retrieval
-    plan: starter
-    envVars:
-      - key: PORT
-        value: 5003
-      - key: DATABASE_URL
-        sync: false
-      - key: INTERNAL_API_KEY
-        fromService:
-          type: web
-          name: zuri-gateway
-          envVarKey: INTERNAL_API_KEY
-
-  - type: pserv
-    name: zuri-audio-service
-    runtime: docker
-    rootDir: .
-    dockerfilePath: ./zuri-Python Services/services/audio/Dockerfile
-    dockerContext: ./zuri-Python Services/services/audio
-    plan: starter
-    envVars:
-      - key: PORT
-        value: 5004
-      - key: INTERNAL_API_KEY
-        fromService:
-          type: web
-          name: zuri-gateway
-          envVarKey: INTERNAL_API_KEY
-
-  - type: pserv
-    name: zuri-evaluation-service
-    runtime: docker
-    rootDir: .
-    dockerfilePath: ./zuri-Python Services/services/evaluation/Dockerfile
-    dockerContext: ./zuri-Python Services/services/evaluation
-    plan: starter
-    envVars:
-      - key: PORT
-        value: 5006
-      - key: DATABASE_URL
-        sync: false
-      - key: INTERNAL_API_KEY
-        fromService:
-          type: web
-          name: zuri-gateway
-          envVarKey: INTERNAL_API_KEY
-
-  - type: pserv
-    name: zuri-ai-monolith
-    runtime: docker
-    rootDir: .
-    dockerfilePath: ./zuri-ai-main/Dockerfile
-    dockerContext: ./zuri-ai-main
-    plan: standard
-    envVars:
-      - key: PORT
-        value: 8000
+        value: 8086
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL
@@ -360,15 +257,43 @@ services:
           type: redis
           name: zuri-redis
           property: hostport
-      - key: GOOGLE_API_KEY
+      - key: AI_SERVICE_URL
+        fromService:
+          type: pserv
+          name: zuri-ai-service
+          property: hostport
+      - key: NOTIFICATION_SERVICE_URL
+        fromService:
+          type: pserv
+          name: zuri-notification-service
+          property: hostport
+      - key: INTERNAL_API_KEY
+        fromService:
+          type: web
+          name: zuri-gateway
+          envVarKey: INTERNAL_API_KEY
+
+  # ---------------------------------------------------------------------------
+  # Unified AI Microservice & Gateway Pipeline (Private)
+  # ---------------------------------------------------------------------------
+  - type: pserv
+    name: zuri-ai-service
+    runtime: docker
+    rootDir: .
+    dockerfilePath: ./ai_service/Dockerfile
+    dockerContext: .
+    plan: standard
+    envVars:
+      - key: PORT
+        value: 5005
+      - key: DATABASE_URL
         sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: zuri-redis
+          property: hostport
       - key: GEMINI_API_KEY
-        sync: false
-      - key: GROQ_API_KEY
-        sync: false
-      - key: WEAVIATE_URL
-        sync: false
-      - key: WEAVIATE_API_KEY
         sync: false
       - key: COHERE_API_KEY
         sync: false
@@ -377,8 +302,6 @@ services:
           type: web
           name: zuri-gateway
           envVarKey: INTERNAL_API_KEY
-      - key: ALLOWED_ORIGINS
-        value: https://zuri.vercel.app,https://app.zuri.app
 
   # ---------------------------------------------------------------------------
   # MinIO - S3-compatible object storage (Private)

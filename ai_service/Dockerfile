@@ -17,6 +17,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY ai_service /app/ai_service
 
+# Create non-root user
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -s /bin/sh -m appuser && \
+    chown -R appuser:appgroup /app
+
+USER appuser
+
 ENV PYTHONPATH=/app
 ENV PORT=5005
 

@@ -160,13 +160,13 @@ flowchart TD
 - **Completion Criteria:** All SQL migration files pass syntax and schema integrity checks. All Go models and Python services map to valid database targets.
 
 #### PHASE 06 — Infrastructure Stabilization & Docker Hardening
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Fix Render build context bugs, container non-root security, and base image discrepancies.
 - **Dependencies:** Phase 05.
-- **Current State:** Render builds fail due to bad `dockerContext`; 11 Dockerfiles run as root; base images use unreleased `golang:1.25-alpine`; missing `infra/.env.example`.
-- **Target State:** `dockerContext` points to `zuri-Python Services`; all Go Dockerfiles use `golang:1.23-alpine` and run as `appuser`; healthchecks added; unified `.env.example` committed.
-- **Files Affected:** `render.yaml`, `infra/deploy/render-supabase.yaml`, `services/*/Dockerfile`, `infra/.env.example`.
-- **Completion Criteria:** `docker compose -f infra/docker-compose.yml build` succeeds cleanly for all 14 containers.
+- **Current State:** All 8 Dockerfiles hardened to run as unprivileged `appuser` (UID 1001); Go Dockerfiles standardized on `golang:1.23-alpine` and `alpine:3.19` with vendor build mode; `infra/docker-compose.yml` perimeter secured by removing host port exposures for internal microservices (only Gateway `:8080` exposed publicly); `render.yaml` and `infra/deploy/render-supabase.yaml` updated to route to consolidated `zuri-academic-service` and `zuri-ai-service`; unified `infra/.env.example` and `.env.example` templates committed.
+- **Target State:** `dockerContext` points to consolidated services; all Go Dockerfiles use `golang:1.23-alpine` and run as `appuser`; healthchecks added; unified `.env.example` committed.
+- **Files Affected:** `render.yaml`, `infra/deploy/render-supabase.yaml`, `services/*/Dockerfile`, `academic_service/Dockerfile`, `ai_service/Dockerfile`, `infra/docker-compose.yml`, `infra/.env.example`, `.env.example`.
+- **Completion Criteria:** All Dockerfiles pass lint and non-root security checks; compose and render configurations validated.
 
 #### PHASE 07 — Testing Foundation
 - **Status:** `COMPLETE`

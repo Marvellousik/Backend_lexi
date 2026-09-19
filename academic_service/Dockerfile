@@ -1,4 +1,4 @@
-﻿FROM python:3.12-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -16,6 +16,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY academic_service /app/academic_service
 COPY ai_service /app/ai_service
+
+# Create non-root user
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -s /bin/sh -m appuser && \
+    chown -R appuser:appgroup /app
+
+USER appuser
 
 ENV PYTHONPATH=/app
 ENV PORT=8086
