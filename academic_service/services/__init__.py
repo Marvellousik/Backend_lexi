@@ -11,6 +11,9 @@ from academic_service.services.proactive_engine import ProactiveEngine, Proactiv
 from academic_service.services.course_partner_service import CoursePartnerService
 from academic_service.services.context_assembler import ContextAssembler, AssembledContext
 from academic_service.services.document_intelligence_service import DocumentIntelligenceService, DocumentIntelligenceResult
+from academic_service.services.adaptive_practice_service import AdaptivePracticeService
+from academic_service.services.research_platform_service import ResearchPlatformService
+from academic_service.services.knowledge_graph_service import KnowledgeGraphService, ConceptDAG
 
 __all__ = [
     "AcademicService",
@@ -26,6 +29,10 @@ __all__ = [
     "AssembledContext",
     "DocumentIntelligenceService",
     "DocumentIntelligenceResult",
+    "AdaptivePracticeService",
+    "ResearchPlatformService",
+    "KnowledgeGraphService",
+    "ConceptDAG",
 ]
 
 

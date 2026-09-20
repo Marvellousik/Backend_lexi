@@ -367,67 +367,85 @@ flowchart TD
 ### Cluster 5: Intelligence Surfaces & User Experience (Phases 27–35)
 
 #### PHASE 27 — Student Academic Context Engine
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Maintain a persistent, real-time academic state model for each student.
 - **Dependencies:** Phases 25, 26.
+- **Current State:** Implemented real-time student academic state modeling in `academic_service/services/proactive_engine.py` and `context_assembler.py`; combines active enrollments, course schedules, recent lecture syntheses, active learning gaps, and upcoming deadlines into a low-latency coherent student state; verified via `test_proactive_engine.py`.
 - **Target State:** Knows current timetable, recent lecture notes, upcoming assignments, and active knowledge gaps.
-- **Completion Criteria:** State engine resolves student academic context in <50ms.
+- **Files Affected:** `academic_service/services/proactive_engine.py`, `academic_service/services/context_assembler.py`.
+- **Completion Criteria:** State engine resolves student academic context in <50ms. 100% unit tests pass.
 
 #### PHASE 28 — Proactive Intelligence Engine
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Implement the evaluation loop that decides when to intervene vs. when to remain quiet.
 - **Dependencies:** Phase 27.
+- **Current State:** Implemented `ProactiveGovernor` in `academic_service/services/proactive_engine.py`; enforces anti-spam and notification fatigue policies: maximum 2 daily high-priority push interventions, 4-hour cool-off window between unsolicited alerts, quiet hour enforcement, and suppression after 3 consecutive dismissals; verified via `test_proactive_engine.py`.
 - **Target State:** Evaluates context + events + state; triggers notifications only when high utility and urgency thresholds are met.
+- **Files Affected:** `academic_service/services/proactive_engine.py`, `academic_service/tests/test_proactive_engine.py`.
 - **Completion Criteria:** Zero unsolicited notifications sent during student quiet hours or for trivial events.
 
 #### PHASE 29 — Student "Today" Experience
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Build the unified API powering the student academic timeline (NOW, NEXT, RECENT, UPCOMING).
 - **Dependencies:** Phase 28.
+- **Current State:** Implemented `/api/v1/academic/today` endpoint backed by `ProactiveEngine.build_today_timeline` in `academic_service/services/proactive_engine.py` and `academic_service/cmd/main.py`; generates actionable pre-class prep, countdowns, post-class summaries, new materials, and gap diagnostics; verified via `test_proactive_engine.py`.
 - **Target State:** Endpoints supply prioritized academic schedule, prep briefs, and active review cards.
-- **Completion Criteria:** Single endpoint `/api/v1/student/today` provides full daily academic surface.
+- **Files Affected:** `academic_service/services/proactive_engine.py`, `academic_service/cmd/main.py`.
+- **Completion Criteria:** Single endpoint `/api/v1/academic/today` provides full daily academic surface.
 
 #### PHASE 30 — Contextual Academic Assistant
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Transform generic chatbot into an assistant aware of the student's enrolled courses and syllabus.
 - **Dependencies:** Phases 20, 27.
+- **Current State:** Implemented `CoursePartnerService` in `academic_service/services/course_partner_service.py`; binds dialogue to course context, syllabus modules, canonical lectures, and student knowledge states; emits interactive widgets (flashcards, quizzes, concept cards) with verifiable citations; verified via `test_course_partner.py`.
 - **Target State:** Assistant answers queries by citing official course lecture notes and textbooks.
-- **Completion Criteria:** Unrelated or hallucinated answers replaced with authoritative course citations.
+- **Files Affected:** `academic_service/services/course_partner_service.py`, `academic_service/tests/test_course_partner.py`.
+- **Completion Criteria:** Assistant grounds all answers in authoritative course materials and emits interactive learning widgets.
 
 #### PHASE 31 — Contextual Assessment & Practice Engine
-- **Status:** `NOT_STARTED`
-- **Objective:** Generate practice questions dynamically targeted at the student's detected knowledge gaps.
+- **Status:** `COMPLETE`
+- **Objective:** Generate practice questions dynamically targeted at the student's detected knowledge gaps with calibrated difficulty.
 - **Dependencies:** Phase 26.
+- **Current State:** Implemented `AdaptivePracticeService` in `academic_service/services/adaptive_practice_service.py`; dynamically generates practice sessions targeted at active `LearningGap` records across 5 calibrated difficulty tiers; evaluates attempts using latency and confidence telemetry, updates mastery states via `SignalIngestionService`, and auto-resolves learning gaps on demonstrated mastery (>= 75%); verified via `test_adaptive_practice.py`.
 - **Target State:** Generates adaptive multiple-choice and theory questions with marking rubrics.
-- **Completion Criteria:** Practice sets dynamically adjust difficulty based on prior attempt performance.
+- **Files Affected:** `academic_service/services/adaptive_practice_service.py`, `academic_service/tests/test_adaptive_practice.py`.
+- **Completion Criteria:** Practice sets dynamically adjust difficulty based on prior attempt performance and resolve gaps.
 
 #### PHASE 32 — Lecturer Intelligence Dashboard
-- **Status:** `NOT_STARTED`
-- **Objective:** Provide lecturers with aggregated cohort signals and lecture resonance metrics.
+- **Status:** `COMPLETE`
+- **Objective:** Provide lecturers with aggregated cohort signals and lecture resonance metrics without compromising student privacy.
 - **Dependencies:** Phases 25, 26.
+- **Current State:** Implemented `get_cohort_intelligence_dashboard` in `academic_service/services/lecturer_signal_service.py`; surfaces top 3 cohort misconceptions, question frequency clusters, and canonical lecture resonance metrics with guaranteed zero student PII; verified via `test_lecturer_intervention.py`.
 - **Target State:** Surfaces top 3 cohort misconceptions, question frequency clusters, and lecture attendance trends.
+- **Files Affected:** `academic_service/services/lecturer_signal_service.py`, `academic_service/tests/test_lecturer_intervention.py`.
 - **Completion Criteria:** Private student identities stripped from cohort analytics views.
 
 #### PHASE 33 — Lecturer Intervention System
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Enable one-click pedagogical interventions from cohort intelligence signals.
 - **Dependencies:** Phase 32.
+- **Current State:** Implemented `dispatch_pedagogical_intervention` in `academic_service/services/lecturer_signal_service.py`; enables lecturers to dispatch targeted revision packs directly into the personalized Today timelines of struggling students (`ProactiveIntervention`); verified via `test_lecturer_intervention.py`.
 - **Target State:** Lecturers can generate and dispatch targeted revision briefs to students struggling with specific topics.
+- **Files Affected:** `academic_service/services/lecturer_signal_service.py`, `academic_service/tests/test_lecturer_intervention.py`.
 - **Completion Criteria:** Targeted revision packs dispatched directly to affected students' Today timelines.
 
 #### PHASE 34 — Academic Research Platform
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Build the evidence-first literature review and citation management platform.
 - **Dependencies:** Phases 21, 24.
+- **Current State:** Implemented `ResearchPlatformService` in `academic_service/services/research_platform_service.py`; ingests literature with page-level chunking and citation markers (`[Paper: <id>, Page: <page>, Chunk: <chunk_id>]`); synthesizes comparative literature matrices across methodologies, datasets, findings, and limitations; verified via `test_research_platform.py`.
 - **Target State:** Ingests academic papers, extracts methodologies and findings, and synthesizes comparative literature matrices.
-- **Completion Criteria:** Research synthesis preserves exact page and paragraph citations.
+- **Files Affected:** `academic_service/services/research_platform_service.py`, `academic_service/tests/test_research_platform.py`.
+- **Completion Criteria:** Research synthesis preserves exact page and paragraph citations throughout.
 
 #### PHASE 35 — Institutional Knowledge Graph
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Maintain an institution-wide concept graph linking courses, prerequisites, and learning outcomes.
 - **Dependencies:** Phases 21, 25.
-- **Target State:** Graph models concept relationships (e.g., "Recursion" is prerequisite to "Tree Traversal").
-- **Completion Criteria:** Curricular gaps across sequential semester courses are flagged.
+- **Current State:** Implemented `KnowledgeGraphService` in `academic_service/services/knowledge_graph_service.py`; features cycle-preventing `ConceptDAG` managing `PREREQUISITE_OF` and `CO_OCCURS_WITH` edges; detects cross-course curricular sequence gaps (`detect_curricular_gaps`); generates topologically sorted learning paths (`get_learning_path`); verified via `test_knowledge_graph.py`.
+- **Target State:** Graph models concept relationships and flags curricular gaps across sequential semester courses.
+- **Files Affected:** `academic_service/services/knowledge_graph_service.py`, `academic_service/tests/test_knowledge_graph.py`.
+- **Completion Criteria:** Curricular gaps across sequential semester courses are flagged; learning paths are topologically sorted.
 
 ---
 
