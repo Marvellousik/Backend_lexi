@@ -259,6 +259,8 @@ class LearningSignalCreate(BaseModel):
     signal_type: str = Field(..., description="'quiz_attempt', 'diagnostic', 'flashcard_review', 'chat_question'")
     score: int = Field(..., ge=0, description="Points scored")
     max_score: int = Field(default=1, ge=1, description="Maximum possible points")
+    latency_ms: Optional[int] = Field(default=None, ge=0, description="Response latency in milliseconds")
+    confidence_level: Optional[int] = Field(default=None, ge=1, le=5, description="Self-assessed confidence level (1-5 scale)")
     details: Optional[Dict[str, Any]] = None
 
 

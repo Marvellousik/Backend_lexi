@@ -318,6 +318,8 @@ class LearningSignal(Base):
     signal_type = Column(String, nullable=False)  # "quiz_attempt", "diagnostic", "flashcard_review", "chat_question"
     score = Column(Integer, nullable=False)       # Points scored (e.g. 1 out of 1, or 3 out of 5)
     max_score = Column(Integer, default=1)
+    latency_ms = Column(Integer, nullable=True)   # Milliseconds response time
+    confidence_level = Column(Integer, nullable=True) # 1-5 scale
     raw_details = Column(JSON, nullable=True)     # Detailed answers, misconception hints
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

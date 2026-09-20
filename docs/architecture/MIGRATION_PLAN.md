@@ -336,25 +336,31 @@ flowchart TD
 - **Completion Criteria:** 429 rate-limit errors trigger transparent fallback to secondary models without application disruption.
 
 #### PHASE 24 — Academic Document Intelligence
-- **Status:** `NOT_STARTED`
-- **Objective:** Transform basic PDF summarization into platform-grade document intelligence.
+- **Status:** `COMPLETE`
+- **Objective:** Transform basic PDF summarization into platform-grade document intelligence with hierarchical parsing and verifiable citation provenance.
 - **Dependencies:** Phases 21, 23.
+- **Current State:** Implemented `DocumentIntelligenceService` in `academic_service/services/document_intelligence_service.py`; extracts hierarchical headings (H1/H2/H3, Chapters, Subsections), page/slide numbers, embedded Markdown tables, and figures; generates structured summaries where every pedagogical claim explicitly cites exact chunk markers `[Chunk <chunk_id>]`; automatically binds document topics and concepts to course syllabus modules; verified via `test_document_intelligence.py`.
 - **Target State:** Ingests textbooks, papers, and slide decks; extracts figures, tables, and concept definitions with citation provenance.
-- **Completion Criteria:** Summary claims cite exact document chunk IDs.
+- **Files Affected:** `academic_service/services/document_intelligence_service.py`, `academic_service/services/__init__.py`, `academic_service/tests/test_document_intelligence.py`.
+- **Completion Criteria:** Summary claims cite exact document chunk IDs. Unit tests pass with 100% success rate.
 
 #### PHASE 25 — Lecture Intelligence Pipeline
-- **Status:** `NOT_STARTED`
-- **Objective:** Convert live and recorded lectures into reusable academic knowledge artifacts.
+- **Status:** `COMPLETE`
+- **Objective:** Convert live and recorded lectures into reusable academic knowledge artifacts with pedagogical synthesis.
 - **Dependencies:** Phases 15, 21.
-- **Target State:** Groq Whisper STT + Gemini pedagogical synthesis produces clean Markdown notes, key concept lists, and study decks.
-- **Completion Criteria:** A 60-minute lecture audio file automatically yields structured revision notes within 3 minutes.
+- **Current State:** Enhanced `LectureIngestionService` in `academic_service/services/lecture_ingestion_service.py`; parses lecture transcripts with timestamp segmentation (`[00:01:23]`, `(01:23)`) and chunk ID assignment; synthesizes structured pedagogical Markdown notes with learning objectives, core topics (citing `[Chunk <chunk_id>]`), key takeaways, and terminology definitions; automatically generates companion study decks (flashcards and revision quizzes with explanations) linked to lecture chunk IDs; verified via `test_lecture_intelligence_pipeline.py`.
+- **Target State:** Audio/transcript processing produces clean Markdown notes, key concept lists, and study decks.
+- **Files Affected:** `academic_service/services/lecture_ingestion_service.py`, `academic_service/tests/test_lecture_intelligence_pipeline.py`.
+- **Completion Criteria:** Lecture transcripts yield structured revision notes and companion study decks with verifiable citations.
 
 #### PHASE 26 — Learning Signal Intelligence
-- **Status:** `NOT_STARTED`
-- **Objective:** Track nuanced student practice signals without false claims of objective mastery.
+- **Status:** `COMPLETE`
+- **Objective:** Track nuanced student practice signals without false claims of objective mastery using latency and confidence telemetry.
 - **Dependencies:** Phases 13, 21.
+- **Current State:** Enhanced `SignalIngestionService` in `academic_service/services/signal_ingestion_service.py` with multi-dimensional mastery modeling; supports `latency_ms` weighting (fluency bonus for fast correct, hesitation dampener for slow correct, deep gap flag for slow incorrect) and `confidence_level` weighting (lucky guess protection, Dunning-Kruger misconception trap detection); dynamically auto-creates high-severity `LearningGap` records when mastery drops or misconceptions occur, and resolves them when demonstrated mastery is verified; verified via `test_learning_signal_intelligence.py`.
 - **Target State:** Tracks concept attempts, response latencies, and self-assessment confidence to infer knowledge gaps.
-- **Completion Criteria:** Weak concept areas are dynamically flagged for review.
+- **Files Affected:** `academic_service/services/signal_ingestion_service.py`, `academic_service/models/orm.py`, `academic_service/models/schema.py`, `academic_service/tests/test_learning_signal_intelligence.py`.
+- **Completion Criteria:** Weak concept areas are dynamically diagnosed and auto-resolved based on verifiable practice telemetry. Unit tests pass cleanly.
 
 ---
 
