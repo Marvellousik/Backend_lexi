@@ -1,9 +1,9 @@
 # Verification Test Log: Content & PDF Ingestion
 
-- **Execution Timestamp**: 2026-09-20T15:07:08.220101+00:00
+- **Execution Timestamp**: 2026-09-20T15:08:53.486956+00:00
 - **Tests Executed**: 3
 - **Passed**: 3 / 3 (100.0%)
-- **Average Latency**: `3.85 ms`
+- **Average Latency**: `4.05 ms`
 
 ---
 
@@ -12,14 +12,14 @@
 ### [TEST-PDF-01] PDF Upload & SHA-256 Provenance Tracking
 - **Verdict**: ✅ PASS
 - **Status Code**: `201`
-- **Response Time**: `0.07 ms`
+- **Response Time**: `0.06 ms`
 - **Endpoint**: `POST /api/v1/materials`
 
 #### Equivalent cURL Request
 ```bash
 curl -X POST "http://localhost:8080/api/v1/materials" \
   -H "Content-Type: multipart/form-data" \
-  -d '{"title": "CSC 301 Lecture Slides", "sha256_checksum": "8b102f53b7c4a362ab95eca5ff1d876290fcfb7275c3a6da0419e2a4788cfec7", "course_offering_id": "off_csc301_veritas", "tracking_id": "trk_875de5841d75"}'
+  -d '{"title": "CSC 301 Lecture Slides", "sha256_checksum": "8b102f53b7c4a362ab95eca5ff1d876290fcfb7275c3a6da0419e2a4788cfec7", "course_offering_id": "off_csc301_veritas", "tracking_id": "trk_b378aba6068c"}'
 ```
 
 #### Payload Package Sent
@@ -34,8 +34,8 @@ curl -X POST "http://localhost:8080/api/v1/materials" \
 ```json
 {
   "status": "success",
-  "material_id": "mat_30cb0ab4",
-  "tracking_id": "trk_875de5841d75",
+  "material_id": "mat_3ae79b1c",
+  "tracking_id": "trk_b378aba6068c",
   "sha256_checksum": "8b102f53b7c4a362ab95eca5ff1d876290fcfb7275c3a6da0419e2a4788cfec7",
   "file_size_bytes": 4678,
   "transcription_status": "none"
@@ -47,7 +47,7 @@ curl -X POST "http://localhost:8080/api/v1/materials" \
 ### [TEST-PDF-02] Multi-Page Extraction & Slide Text Segmentation
 - **Verdict**: ✅ PASS
 - **Status Code**: `200`
-- **Response Time**: `11.34 ms`
+- **Response Time**: `11.95 ms`
 - **Endpoint**: `EXTRACT internal://pdf/extract_pages`
 
 #### Equivalent cURL Request

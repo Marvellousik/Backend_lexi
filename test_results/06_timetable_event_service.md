@@ -1,9 +1,9 @@
 # Verification Test Log: Timetable & Event Manager
 
-- **Execution Timestamp**: 2026-09-20T15:07:08.221754+00:00
+- **Execution Timestamp**: 2026-09-20T15:08:53.488456+00:00
 - **Tests Executed**: 3
 - **Passed**: 3 / 3 (100.0%)
-- **Average Latency**: `3.15 ms`
+- **Average Latency**: `4.54 ms`
 
 ---
 
@@ -12,7 +12,7 @@
 ### [TEST-TIME-01] Course & Timetable Slot Extraction from Syllabus Document
 - **Verdict**: ✅ PASS
 - **Status Code**: `200`
-- **Response Time**: `0.49 ms`
+- **Response Time**: `0.4 ms`
 - **Endpoint**: `GET /api/v1/academic/courses/course_csc301_veritas`
 
 #### Equivalent cURL Request
@@ -44,7 +44,7 @@ curl -X GET "http://localhost:8080/api/v1/academic/courses/course_csc301_veritas
 ### [TEST-TIME-02] AI Academic Context Gap Detection (Missing Class Time/Venue)
 - **Verdict**: ✅ PASS
 - **Status Code**: `200`
-- **Response Time**: `5.36 ms`
+- **Response Time**: `8.07 ms`
 - **Endpoint**: `GET /api/v1/academic/context-gaps`
 
 #### Equivalent cURL Request
@@ -67,7 +67,7 @@ curl -X GET "http://localhost:8080/api/v1/academic/context-gaps" \
 ```json
 {
   "gaps_detected": 1,
-  "gap_id": "41476f81-6954-4aea-bea4-7c14f37cdf99",
+  "gap_id": "942c6a30-3fd0-4f72-a9fe-007af6822ac1",
   "prompt_question": "I have your CSC 399 (Research Methodology & Independent Study) class, but I don't know when it holds. What day and time is the lecture?"
 }
 ```
@@ -77,12 +77,12 @@ curl -X GET "http://localhost:8080/api/v1/academic/context-gaps" \
 ### [TEST-TIME-03] Student Gap Verification Resolution & Timetable Slot Logging
 - **Verdict**: ✅ PASS
 - **Status Code**: `200`
-- **Response Time**: `3.61 ms`
-- **Endpoint**: `POST /api/v1/academic/context-gaps/41476f81-6954-4aea-bea4-7c14f37cdf99/resolve`
+- **Response Time**: `5.16 ms`
+- **Endpoint**: `POST /api/v1/academic/context-gaps/942c6a30-3fd0-4f72-a9fe-007af6822ac1/resolve`
 
 #### Equivalent cURL Request
 ```bash
-curl -X POST "http://localhost:8080/api/v1/academic/context-gaps/41476f81-6954-4aea-bea4-7c14f37cdf99/resolve" \
+curl -X POST "http://localhost:8080/api/v1/academic/context-gaps/942c6a30-3fd0-4f72-a9fe-007af6822ac1/resolve" \
   -H "Content-Type: application/json" \
   -H "X-User-ID: usr_student_gap_test" \
   -d '{"response_value": "Monday 10:00 - 12:00 in Lecture Theatre 2 (LT2)"}'
@@ -98,7 +98,7 @@ curl -X POST "http://localhost:8080/api/v1/academic/context-gaps/41476f81-6954-4
 #### Response Package Received
 ```json
 {
-  "gap_id": "41476f81-6954-4aea-bea4-7c14f37cdf99",
+  "gap_id": "942c6a30-3fd0-4f72-a9fe-007af6822ac1",
   "status": "resolved",
   "message": "Thank you! Your academic context has been updated."
 }
