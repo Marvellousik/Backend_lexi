@@ -237,6 +237,7 @@ services:
       - ACADEMIC_SERVICE_URL=http://academic-service:8086
       - AI_SERVICE_URL=http://ai-service:5005
       - AI_SERVICE_TIMEOUT=${AI_SERVICE_TIMEOUT:-120s}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - REDIS_URL=redis:6379
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-dev-internal-key}
       - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-key-here}
@@ -326,6 +327,7 @@ services:
       - REDIS_URL=redis:6379
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - COHERE_API_KEY=${COHERE_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-dev-internal-key}
       - LOG_LEVEL=info
     # Internal service - isolated within zuri-network, routed via Gateway (:8080)

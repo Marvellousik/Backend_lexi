@@ -32,7 +32,18 @@ try:
     )
 except Exception as e:
     logger.warning(f"Using in-memory SQLite fallback due to database driver issue: {e}")
-    engine = create_engine("sqlite:///:memory:")
+    from sqlalchemy.pool import StaticPool
+    from sqlalchemy import event
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    @event.listens_for(engine, "connect")
+    def do_connect(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("ATTACH DATABASE ':memory:' AS ai")
+        cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -40,17 +51,14 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def init_db():
     """Ensure vector extension, ai schema, and tables are initialized."""
     try:
-        with engine.connect() as conn:
-            # Enable vector extension if pgvector is available
-            try:
-                conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-            except Exception as e:
-                logger.warning(f"Could not enable 'vector' extension (may require superuser or pgvector): {e}")
-            
-            # Create AI schema
-            conn.execute(text("CREATE SCHEMA IF NOT EXISTS ai"))
-            conn.commit()
-            
+        if engine.dialect.name != "sqlite":
+            with engine.connect() as conn:
+                try:
+                    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                except Exception as e:
+                    logger.warning(f"Could not enable 'vector' extension: {e}")
+                conn.execute(text("CREATE SCHEMA IF NOT EXISTS ai"))
+                conn.commit()
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Database schema 'ai' and tables initialized successfully")
     except Exception as e:

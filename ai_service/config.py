@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     # Model Provider Keys
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
     cohere_api_key: str = os.getenv("COHERE_API_KEY", "")
+    openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
     
     # Defaults
     default_model: str = os.getenv("DEFAULT_MODEL", "gemini-2.5-flash-lite")

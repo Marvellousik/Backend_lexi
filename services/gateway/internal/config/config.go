@@ -37,9 +37,10 @@ type Config struct {
 	SyncServiceURL          string
 	AcademicServiceURL      string
 	
-	// AI Service
+	// AI Service & Providers
 	AIServiceURL            string
 	AIServiceTimeout        time.Duration
+	OpenRouterAPIKey        string
 	
 	// Security
 	InternalAPIKey          string
@@ -66,6 +67,7 @@ func Load() (*Config, error) {
 		AcademicServiceURL:      getEnv("ACADEMIC_SERVICE_URL", "http://localhost:8086"),
 		AIServiceURL:            getEnv("AI_SERVICE_URL", "http://localhost:5005"),
 		AIServiceTimeout:        getEnvDuration("AI_SERVICE_TIMEOUT", 120*time.Second),
+		OpenRouterAPIKey:        getEnv("OPENROUTER_API_KEY", ""),
 		InternalAPIKey:          getEnv("INTERNAL_API_KEY", "dev-internal-key"),
 	}
 	

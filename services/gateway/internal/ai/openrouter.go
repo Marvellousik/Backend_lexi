@@ -22,7 +22,7 @@ const (
 	DefaultOpenRouterBaseURL = "https://openrouter.ai/api/v1/chat/completions"
 	DefaultHTTPReferer       = "https://zuri.academy"
 	DefaultXTitle            = "Zuri Academic Engine"
-	DefaultModel             = "google/gemini-2.5-flash"
+	DefaultModel             = "openrouter/auto"
 )
 
 // ModelPricing defines per-million token pricing in USD.
@@ -33,6 +33,7 @@ type ModelPricing struct {
 
 // defaultPricingTable contains reference pricing for models commonly routed in Zuri.
 var defaultPricingTable = map[string]ModelPricing{
+	"openrouter/auto":                       {PromptPerMillion: 0.15, CompletionPerMillion: 0.60},
 	"google/gemini-2.5-flash":               {PromptPerMillion: 0.075, CompletionPerMillion: 0.30},
 	"google/gemini-2.5-flash-lite":          {PromptPerMillion: 0.0375, CompletionPerMillion: 0.15},
 	"google/gemini-2.5-pro":                 {PromptPerMillion: 1.25, CompletionPerMillion: 5.00},

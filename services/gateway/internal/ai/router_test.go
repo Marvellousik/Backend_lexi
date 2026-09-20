@@ -36,41 +36,38 @@ func (m *mockLLMProvider) Name() string {
 func TestDefaultRouterConfig(t *testing.T) {
 	cfg := ai.DefaultRouterConfig()
 	require.NotNil(t, cfg)
-	assert.Equal(t, "1.0", cfg.Version)
+	assert.Equal(t, "2.0", cfg.Version)
 	assert.Equal(t, ai.TaskChat, cfg.DefaultTask)
 
 	// chat -> speed
 	chatRoute, ok := cfg.Tasks[ai.TaskChat]
 	require.True(t, ok)
 	assert.Equal(t, ai.StrategySpeed, chatRoute.Strategy)
-	assert.Equal(t, "google/gemini-2.5-flash", chatRoute.PrimaryModel)
-	assert.Contains(t, chatRoute.FallbackModels, "anthropic/claude-3-5-haiku")
+	assert.Equal(t, "openrouter/auto", chatRoute.PrimaryModel)
 
 	// quiz_generation -> quality
 	quizRoute, ok := cfg.Tasks[ai.TaskQuizGeneration]
 	require.True(t, ok)
 	assert.Equal(t, ai.StrategyQuality, quizRoute.Strategy)
-	assert.Equal(t, "google/gemini-2.5-pro", quizRoute.PrimaryModel)
-	assert.Contains(t, quizRoute.FallbackModels, "anthropic/claude-3-7-sonnet")
+	assert.Equal(t, "openrouter/auto", quizRoute.PrimaryModel)
 
 	// flashcards -> cost
 	fcRoute, ok := cfg.Tasks[ai.TaskFlashcards]
 	require.True(t, ok)
 	assert.Equal(t, ai.StrategyCost, fcRoute.Strategy)
-	assert.Equal(t, "google/gemini-2.5-flash-lite", fcRoute.PrimaryModel)
-	assert.Contains(t, fcRoute.FallbackModels, "meta-llama/llama-3.1-8b-instruct:free")
+	assert.Equal(t, "openrouter/auto", fcRoute.PrimaryModel)
 
 	// summarize_document -> cost_quality_balance
 	sumRoute, ok := cfg.Tasks[ai.TaskSummarizeDocument]
 	require.True(t, ok)
 	assert.Equal(t, ai.StrategyCostQualityBalance, sumRoute.Strategy)
-	assert.Equal(t, "google/gemini-2.5-flash", sumRoute.PrimaryModel)
+	assert.Equal(t, "openrouter/auto", sumRoute.PrimaryModel)
 
 	// research_assistance -> quality
 	resRoute, ok := cfg.Tasks[ai.TaskResearchAssistance]
 	require.True(t, ok)
 	assert.Equal(t, ai.StrategyQuality, resRoute.Strategy)
-	assert.Equal(t, "anthropic/claude-3-7-sonnet", resRoute.PrimaryModel)
+	assert.Equal(t, "openrouter/auto", resRoute.PrimaryModel)
 }
 
 func TestLoadRouterConfigFile(t *testing.T) {
@@ -80,30 +77,31 @@ func TestLoadRouterConfigFile(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	assert.Equal(t, "1.0", cfg.Version)
+	assert.Equal(t, "2.0", cfg.Version)
 	assert.Equal(t, "chat", cfg.DefaultTask)
 	assert.Len(t, cfg.Tasks, 5)
 
 	chat := cfg.Tasks["chat"]
 	assert.Equal(t, "speed", chat.Strategy)
-	assert.Equal(t, "google/gemini-2.5-flash", chat.PrimaryModel)
+	assert.Equal(t, "openrouter/auto", chat.PrimaryModel)
 	assert.Equal(t, 2048, chat.MaxTokens)
 
 	quiz := cfg.Tasks["quiz_generation"]
 	assert.Equal(t, "quality", quiz.Strategy)
-	assert.Equal(t, "google/gemini-2.5-pro", quiz.PrimaryModel)
+	assert.Equal(t, "openrouter/auto", quiz.PrimaryModel)
 	assert.Equal(t, 4096, quiz.MaxTokens)
 
 	flashcards := cfg.Tasks["flashcards"]
 	assert.Equal(t, "cost", flashcards.Strategy)
-	assert.Equal(t, "google/gemini-2.5-flash-lite", flashcards.PrimaryModel)
+	assert.Equal(t, "openrouter/auto", flashcards.PrimaryModel)
 
 	sum := cfg.Tasks["summarize_document"]
 	assert.Equal(t, "cost_quality_balance", sum.Strategy)
+	assert.Equal(t, "openrouter/auto", sum.PrimaryModel)
 
 	research := cfg.Tasks["research_assistance"]
 	assert.Equal(t, "quality", research.Strategy)
-	assert.Equal(t, "anthropic/claude-3-7-sonnet", research.PrimaryModel)
+	assert.Equal(t, "openrouter/auto", research.PrimaryModel)
 }
 
 func TestModelRouter_GetRoute(t *testing.T) {
@@ -113,7 +111,7 @@ func TestModelRouter_GetRoute(t *testing.T) {
 	route := router.GetRoute(ai.TaskQuizGeneration)
 	assert.Equal(t, ai.TaskQuizGeneration, route.Task)
 	assert.Equal(t, ai.StrategyQuality, route.Strategy)
-	assert.Equal(t, "google/gemini-2.5-pro", route.PrimaryModel)
+	assert.Equal(t, "openrouter/auto", route.PrimaryModel)
 
 	// Empty task -> default (chat)
 	defaultRoute := router.GetRoute("")
@@ -134,8 +132,7 @@ func TestModelRouter_RouteRequest(t *testing.T) {
 	}
 	routed1 := router.RouteRequest(req1)
 	assert.Equal(t, ai.TaskChat, routed1.Task)
-	assert.Equal(t, "google/gemini-2.5-flash", routed1.Model)
-	assert.Contains(t, routed1.FallbackModels, "anthropic/claude-3-5-haiku")
+	assert.Equal(t, "openrouter/auto", routed1.Model)
 	assert.Equal(t, 2048, routed1.MaxTokens)
 	require.NotNil(t, routed1.Temperature)
 	assert.Equal(t, 0.7, *routed1.Temperature)
@@ -146,8 +143,7 @@ func TestModelRouter_RouteRequest(t *testing.T) {
 		Messages: []ai.Message{{Role: "user", Content: "quiz"}},
 	}
 	routed2 := router.RouteRequest(req2)
-	assert.Equal(t, "google/gemini-2.5-pro", routed2.Model)
-	assert.Contains(t, routed2.FallbackModels, "anthropic/claude-3-7-sonnet")
+	assert.Equal(t, "openrouter/auto", routed2.Model)
 	assert.Equal(t, 4096, routed2.MaxTokens)
 	require.NotNil(t, routed2.Temperature)
 	assert.Equal(t, 0.2, *routed2.Temperature)
@@ -163,14 +159,14 @@ func TestModelRouter_RouteRequest(t *testing.T) {
 	routed3 := router.RouteRequest(req3)
 	assert.Equal(t, "custom/my-model", routed3.Model)
 	assert.Equal(t, 0.95, *routed3.Temperature)
-	assert.Contains(t, routed3.FallbackModels, "meta-llama/llama-3.1-8b-instruct:free")
+	assert.Empty(t, routed3.FallbackModels)
 }
 
 func TestModelRouter_Delegation_CompleteAndStream(t *testing.T) {
 	mockProv := &mockLLMProvider{
 		resp: ai.CompletionResponse{
 			ID:      "resp-1",
-			Model:   "google/gemini-2.5-pro",
+			Model:   "openrouter/auto",
 			CostUSD: 0.002,
 		},
 		streamChan: make(chan ai.Chunk, 1),
@@ -190,7 +186,7 @@ func TestModelRouter_Delegation_CompleteAndStream(t *testing.T) {
 	resp, err := router.Complete(ctx, req)
 	require.NoError(t, err)
 	assert.Equal(t, "resp-1", resp.ID)
-	assert.Equal(t, "google/gemini-2.5-pro", mockProv.lastRequest.Model)
+	assert.Equal(t, "openrouter/auto", mockProv.lastRequest.Model)
 
 	// Test Stream delegation
 	streamChan, err := router.Stream(ctx, req)
