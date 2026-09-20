@@ -1,0 +1,48 @@
+version: "1.0"
+default_task: "chat"
+
+tasks:
+  chat:
+    strategy: "speed"
+    primary: "google/gemini-2.5-flash"
+    fallbacks:
+      - "anthropic/claude-3-5-haiku"
+      - "meta-llama/llama-3.3-70b-instruct"
+    max_tokens: 2048
+    temperature: 0.7
+
+  quiz_generation:
+    strategy: "quality"
+    primary: "google/gemini-2.5-pro"
+    fallbacks:
+      - "anthropic/claude-3-7-sonnet"
+      - "openai/gpt-4o"
+    max_tokens: 4096
+    temperature: 0.2
+
+  flashcards:
+    strategy: "cost"
+    primary: "google/gemini-2.5-flash-lite"
+    fallbacks:
+      - "meta-llama/llama-3.1-8b-instruct:free"
+      - "deepseek/deepseek-chat"
+    max_tokens: 2048
+    temperature: 0.3
+
+  summarize_document:
+    strategy: "cost_quality_balance"
+    primary: "google/gemini-2.5-flash"
+    fallbacks:
+      - "meta-llama/llama-3.3-70b-instruct"
+      - "openai/gpt-4o-mini"
+    max_tokens: 4096
+    temperature: 0.3
+
+  research_assistance:
+    strategy: "quality"
+    primary: "anthropic/claude-3-7-sonnet"
+    fallbacks:
+      - "google/gemini-2.5-pro"
+      - "openai/gpt-4o"
+    max_tokens: 8192
+    temperature: 0.4
