@@ -17,7 +17,7 @@ from ai_service.gateway.dedup_manager import DedupManager
 from ai_service.gateway.circuit_breaker import CircuitBreaker, CircuitState
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_cache_manager_key_computation():
     mgr = CacheManager()
     key1 = mgr.compute_cache_key(
@@ -59,7 +59,7 @@ def test_circuit_breaker_transitions():
     assert cb.allow_request() is False
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_dedup_manager_local_collapsing():
     dedup = DedupManager()
     key = "ai_dedup:test_op:123"

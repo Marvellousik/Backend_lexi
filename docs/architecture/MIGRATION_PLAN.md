@@ -300,18 +300,22 @@ flowchart TD
 - **Completion Criteria:** Every AI task resolves to an explicit tier policy and deterministic fallback model chain.
 
 #### PHASE 20 — Context Engine & Assembler
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Build the automated context assembler that resolves institutional, course, and student context.
 - **Dependencies:** Phases 13, 19.
-- **Target State:** Injects relevant syllabus modules, prerequisite concepts, and student mastery signals into prompts.
-- **Completion Criteria:** AI prompts are grounded in authoritative course materials.
+- **Current State:** Implemented `ContextAssembler` and `AssembledContext` in `academic_service/services/context_assembler.py`; dynamically assembles structured prompt contexts across course timetable/schedules, upcoming lectures, syllabus modules prioritized by query relevance, diagnosed student learning gaps and knowledge states, and authoritative retrieved course chunks; enforces strict token budget distribution (default 4000 tokens: syllabus 15%, mastery 15%, timetable 10%, chunks 60%); injects deterministic citation anchors (`[Chunk <chunk_id>]`); verified via `academic_service/tests/test_context_assembler.py`.
+- **Target State:** Injects relevant syllabus modules, prerequisite concepts, and student mastery signals into prompts with verifiable citation provenance.
+- **Files Affected:** `academic_service/services/context_assembler.py`, `academic_service/services/__init__.py`, `academic_service/tests/test_context_assembler.py`.
+- **Completion Criteria:** AI prompts are grounded in authoritative course materials with verifiable chunk citations. 100% unit tests pass.
 
 #### PHASE 21 — Hybrid Vector Retrieval (pgvector + RRF)
-- **Status:** `NOT_STARTED`
+- **Status:** `COMPLETE`
 - **Objective:** Unify vector embeddings to 1024 dimensions and implement Reciprocal Rank Fusion hybrid search.
 - **Dependencies:** Phases 05, 20.
+- **Current State:** Implemented Reciprocal Rank Fusion ($k=60$) in `ai_service/tools/retrieval_tool.py` combining dense 1024-dim Cohere embeddings via pgvector cosine similarity (`LexiChunk.embedding.cosine_distance`) with sparse PostgreSQL full-text search (`to_tsvector('english', chunk_text) @@ plainto_tsquery('english', :query)`); enriched `LexiChunk` with hierarchical `heading` and `section` metadata in `ai_service/storage/models.py`; enforced strict multi-tenant isolation by `institution_id` and `course_id`; verified via unit tests in `ai_service/tests/test_hybrid_retrieval.py`.
 - **Target State:** Standardize on 1024-dim Cohere embeddings in `zuri_knowledge.document_chunks`; combine cosine distance with PostgreSQL `tsvector` keyword search using RRF ($k=60$).
-- **Completion Criteria:** Hybrid search outperforms pure vector search on course-code and technical terminology queries.
+- **Files Affected:** `ai_service/tools/retrieval_tool.py`, `ai_service/storage/models.py`, `ai_service/tests/test_hybrid_retrieval.py`.
+- **Completion Criteria:** Hybrid search combines dense and sparse ranks via RRF with zero cross-tenant leaks. All unit tests pass.
 
 #### PHASE 22 — AI Semantic Cache & Cost Governance
 - **Status:** `COMPLETE`

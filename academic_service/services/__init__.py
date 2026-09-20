@@ -9,6 +9,7 @@ from academic_service.services.signal_ingestion_service import SignalIngestionSe
 from academic_service.services.lecturer_signal_service import LecturerSignalService
 from academic_service.services.proactive_engine import ProactiveEngine, ProactiveGovernor
 from academic_service.services.course_partner_service import CoursePartnerService
+from academic_service.services.context_assembler import ContextAssembler, AssembledContext
 
 __all__ = [
     "AcademicService",
@@ -20,6 +21,8 @@ __all__ = [
     "ProactiveEngine",
     "ProactiveGovernor",
     "CoursePartnerService",
+    "ContextAssembler",
+    "AssembledContext",
 ]
 
 

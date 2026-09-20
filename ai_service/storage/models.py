@@ -99,6 +99,8 @@ class LexiChunk(Base):
     chunk_index = Column(Integer, nullable=False)
     chunk_text = Column(Text, nullable=False)
     source = Column(String, nullable=False, default="uploaded_note")
+    heading = Column(String, nullable=True)
+    section = Column(String, nullable=True)
     embedding = Column(vector_type, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
