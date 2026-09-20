@@ -18,10 +18,11 @@ type QuizRepository interface {
 	GetByMaterialID(ctx context.Context, materialID uuid.UUID) ([]model.Quiz, error)
 	Update(ctx context.Context, quiz *model.Quiz) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	
+
 	// Question methods
 	CreateQuestion(ctx context.Context, question *model.QuizQuestion) error
 	GetQuestionsByQuizID(ctx context.Context, quizID uuid.UUID) ([]model.QuizQuestion, error)
+	GetQuestionByID(ctx context.Context, id uuid.UUID) (*model.QuizQuestion, error)
 	UpdateQuestion(ctx context.Context, question *model.QuizQuestion) error
 	DeleteQuestion(ctx context.Context, id uuid.UUID) error
 }
@@ -108,6 +109,16 @@ func (r *quizRepository) GetQuestionsByQuizID(ctx context.Context, quizID uuid.U
 		Order("order_index").
 		Find(&questions).Error
 	return questions, err
+}
+
+// GetQuestionByID retrieves a single quiz question by ID.
+func (r *quizRepository) GetQuestionByID(ctx context.Context, id uuid.UUID) (*model.QuizQuestion, error) {
+	var question model.QuizQuestion
+	err := r.db.WithContext(ctx).First(&question, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &question, nil
 }
 
 // UpdateQuestion updates a quiz question.

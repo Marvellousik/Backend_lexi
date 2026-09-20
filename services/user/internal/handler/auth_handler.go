@@ -4,10 +4,13 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 
 	"zuri/services/user/internal/service"
+	"zuri/shared/pkg/auth"
 	"zuri/shared/pkg/logger"
 )
 
@@ -173,7 +176,23 @@ func (h *AuthHandler) Logout(c echo.Context) error {
 	}
 
 	// Extract JTI from access token if available
-	accessTokenJTI := "" // This would be extracted from the token in middleware
+	accessTokenJTI := c.Request().Header.Get("X-Token-ID")
+	if accessTokenJTI == "" {
+		accessTokenJTI = c.Request().Header.Get("X-Token-JTI")
+	}
+	if accessTokenJTI == "" {
+		authHeader := c.Request().Header.Get("Authorization")
+		if strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
+			rawToken := strings.TrimSpace(authHeader[7:])
+			parser := jwt.NewParser()
+			token, _, err := parser.ParseUnverified(rawToken, &auth.Claims{})
+			if err == nil {
+				if claims, ok := token.Claims.(*auth.Claims); ok && claims.ID != "" {
+					accessTokenJTI = claims.ID
+				}
+			}
+		}
+	}
 
 	if err := h.userService.Logout(ctx, userID, accessTokenJTI); err != nil {
 		return err

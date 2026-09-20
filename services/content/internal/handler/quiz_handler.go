@@ -44,6 +44,15 @@ func (h *QuizHandler) CreateQuiz(c echo.Context) error {
 
 	quiz, err := h.service.CreateQuiz(c.Request().Context(), userID, &req)
 	if err != nil {
+		if err == service.ErrCourseNotFound {
+			return echo.NewHTTPError(http.StatusNotFound, "course not found")
+		}
+		if err == service.ErrMaterialNotFound {
+			return echo.NewHTTPError(http.StatusNotFound, "material not found")
+		}
+		if err == service.ErrUnauthorized {
+			return echo.NewHTTPError(http.StatusForbidden, "access denied")
+		}
 		logger.Error("failed to create quiz", zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create quiz")
 	}
@@ -147,6 +156,12 @@ func (h *QuizHandler) UpdateQuiz(c echo.Context) error {
 		if err == service.ErrQuizNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "quiz not found")
 		}
+		if err == service.ErrCourseNotFound {
+			return echo.NewHTTPError(http.StatusNotFound, "course not found")
+		}
+		if err == service.ErrMaterialNotFound {
+			return echo.NewHTTPError(http.StatusNotFound, "material not found")
+		}
 		if err == service.ErrUnauthorized {
 			return echo.NewHTTPError(http.StatusForbidden, "access denied")
 		}
@@ -238,7 +253,7 @@ func (h *QuizHandler) UpdateQuestion(c echo.Context) error {
 
 	question, err := h.service.UpdateQuizQuestion(c.Request().Context(), userID, questionID, &req)
 	if err != nil {
-		if err.Error() == "question not found" {
+		if err == service.ErrQuestionNotFound || err.Error() == "question not found" {
 			return echo.NewHTTPError(http.StatusNotFound, "question not found")
 		}
 		if err == service.ErrUnauthorized {
@@ -264,7 +279,7 @@ func (h *QuizHandler) DeleteQuestion(c echo.Context) error {
 	}
 
 	if err := h.service.DeleteQuizQuestion(c.Request().Context(), userID, questionID); err != nil {
-		if err.Error() == "question not found" {
+		if err == service.ErrQuestionNotFound || err.Error() == "question not found" {
 			return echo.NewHTTPError(http.StatusNotFound, "question not found")
 		}
 		if err == service.ErrUnauthorized {

@@ -194,6 +194,6 @@ SELECT
     cl.*,
     u.email as user_email
 FROM zuri_sync.change_log cl
-LEFT JOIN auth.users u ON cl.user_id = u.id
+LEFT JOIN zuri_auth.users u ON cl.user_id = u.id
 WHERE cl.processed = false
 ORDER BY cl.changed_at ASC;

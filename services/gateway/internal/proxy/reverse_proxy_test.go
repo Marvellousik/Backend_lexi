@@ -49,8 +49,11 @@ func TestProxyWebSocket(t *testing.T) {
 	p := NewReverseProxy(3, 10*time.Second, "test-internal-key")
 
 	e.GET("/ws", func(c echo.Context) error {
-		// Simulate auth middleware setting user_id
+		// Simulate auth middleware setting user_id, role, and token_id
 		c.Set("user_id", "test-user-123")
+		c.Set("role", "student")
+		c.Set("token_id", "test-jti-abc")
+		c.Set("institution_id", "inst-veritas-01")
 		return p.ProxyWebSocket(c, upstreamServer.URL, true)
 	})
 
@@ -86,5 +89,39 @@ func TestProxyWebSocket(t *testing.T) {
 	require.NoError(t, upstreamErr)
 	assert.Equal(t, "HelloGateway", upstreamReceivedHeaders.Get("X-Custom-Header"))
 	assert.Equal(t, "test-user-123", upstreamReceivedHeaders.Get("X-User-ID"))
+	assert.Equal(t, "student", upstreamReceivedHeaders.Get("X-User-Role"))
+	assert.Equal(t, "test-jti-abc", upstreamReceivedHeaders.Get("X-Token-ID"))
+	assert.Equal(t, "inst-veritas-01", upstreamReceivedHeaders.Get("X-Institution-ID"))
 	assert.Equal(t, "test-internal-key", upstreamReceivedHeaders.Get("X-Internal-Key"))
+}
+
+func TestProxyRequest_InjectRoleAndTokenHeaders(t *testing.T) {
+	var upstreamHeaders http.Header
+
+	upstreamServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		upstreamHeaders = r.Header
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	}))
+	defer upstreamServer.Close()
+
+	e := echo.New()
+	p := NewReverseProxy(3, 10*time.Second, "test-internal-key")
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/test", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", "usr-456")
+	c.Set("role", "instructor")
+	c.Set("token_id", "tok-jti-789")
+	c.Set("institution_id", "inst-veritas-01")
+
+	err := p.ProxyRequest(c, upstreamServer.URL, "test-service", true)
+	require.NoError(t, err)
+
+	assert.Equal(t, "usr-456", upstreamHeaders.Get("X-User-ID"))
+	assert.Equal(t, "instructor", upstreamHeaders.Get("X-User-Role"))
+	assert.Equal(t, "tok-jti-789", upstreamHeaders.Get("X-Token-ID"))
+	assert.Equal(t, "inst-veritas-01", upstreamHeaders.Get("X-Institution-ID"))
+	assert.Equal(t, "test-internal-key", upstreamHeaders.Get("X-Internal-Key"))
 }

@@ -45,6 +45,11 @@ func (c *Client) Close() error {
 	return c.client.Close()
 }
 
+// Client returns the underlying go-redis client.
+func (c *Client) Client() *redis.Client {
+	return c.client
+}
+
 // Get retrieves a value from Redis.
 func (c *Client) Get(ctx context.Context, key string) (string, error) {
 	val, err := c.client.Get(ctx, key).Result()
@@ -129,9 +134,9 @@ func (c *Client) TTL(ctx context.Context, key string) (time.Duration, error) {
 
 // RateLimitConfig holds configuration for rate limiting.
 type RateLimitConfig struct {
-	Window       time.Duration
-	MaxRequests  int
-	KeyPrefix    string
+	Window      time.Duration
+	MaxRequests int
+	KeyPrefix   string
 }
 
 // CheckRateLimit checks if a request is within rate limits using sliding window.
@@ -142,19 +147,19 @@ func (c *Client) CheckRateLimit(ctx context.Context, identifier string, config *
 	windowStart := now - int64(config.Window.Seconds())
 
 	pipe := c.client.Pipeline()
-	
+
 	// Remove old entries outside the window
 	pipe.ZRemRangeByScore(ctx, key, "0", strconv.FormatInt(windowStart, 10))
-	
+
 	// Count current requests in window
 	countCmd := pipe.ZCard(ctx, key)
-	
+
 	// Add current request
 	pipe.ZAdd(ctx, key, redis.Z{Score: float64(now), Member: now})
-	
+
 	// Set expiration on the key
 	pipe.Expire(ctx, key, config.Window)
-	
+
 	_, err = pipe.Exec(ctx)
 	if err != nil {
 		return false, 0, time.Time{}, fmt.Errorf("rate limit check failed: %w", err)
@@ -169,7 +174,7 @@ func (c *Client) CheckRateLimit(ctx context.Context, identifier string, config *
 		if err != nil || len(oldest) == 0 {
 			return false, 0, time.Now().Add(config.Window), nil
 		}
-		
+
 		oldestScore, _ := strconv.ParseFloat(oldest[0], 64)
 		resetAt = time.Unix(int64(oldestScore), 0).Add(config.Window)
 		return false, 0, resetAt, nil

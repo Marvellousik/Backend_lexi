@@ -25,6 +25,9 @@ type Config struct {
 	RedisPassword string
 	RedisDB       int
 
+	// Model Provider Keys
+	OpenRouterAPIKey string
+
 	// Service-specific configs
 	UserService     *UserServiceConfig
 	GatewayService  *GatewayConfig
@@ -52,12 +55,13 @@ type UserServiceConfig struct {
 
 // GatewayConfig holds Gateway specific configuration.
 type GatewayConfig struct {
-	PublicKeyPath   string
-	RateLimitRPM    int
-	AIRateLimitRPM  int
-	AllowedOrigins  []string
-	UserServiceURL  string
+	PublicKeyPath     string
+	RateLimitRPM      int
+	AIRateLimitRPM    int
+	AllowedOrigins    []string
+	UserServiceURL    string
 	ContentServiceURL string
+	OpenRouterAPIKey  string
 }
 
 // ContentConfig holds Content Service specific configuration.
@@ -120,12 +124,13 @@ func (l *Loader) Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		ServiceName: getEnv("SERVICE_NAME", "zuri"),
-		Environment: getEnv("ENVIRONMENT", "development"),
-		LogLevel:    getEnv("LOG_LEVEL", "info"),
-		Port:        getEnv("PORT", "8080"),
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		RedisURL:    getEnv("REDIS_URL", "localhost:6379"),
+		ServiceName:      getEnv("SERVICE_NAME", "zuri"),
+		Environment:      getEnv("ENVIRONMENT", "development"),
+		LogLevel:         getEnv("LOG_LEVEL", "info"),
+		Port:             getEnv("PORT", "8080"),
+		DatabaseURL:      os.Getenv("DATABASE_URL"),
+		RedisURL:         getEnv("REDIS_URL", "localhost:6379"),
+		OpenRouterAPIKey: os.Getenv("OPENROUTER_API_KEY"),
 	}
 
 	// Parse Redis DB
@@ -205,6 +210,7 @@ func (l *Loader) LoadGatewayConfig() (*GatewayConfig, error) {
 		AllowedOrigins:    origins,
 		UserServiceURL:    getEnv("USER_SERVICE_URL", "http://localhost:8081"),
 		ContentServiceURL: getEnv("CONTENT_SERVICE_URL", "http://localhost:8082"),
+		OpenRouterAPIKey:  os.Getenv("OPENROUTER_API_KEY"),
 	}, nil
 }
 

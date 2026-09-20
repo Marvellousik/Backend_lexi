@@ -11,18 +11,23 @@ import (
 	"gorm.io/gorm"
 )
 
-// Course represents a course/study subject.
+// Course represents a course/study subject and institutional intelligence hub.
 type Course struct {
-	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
-	UserID      uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
-	Name        string         `gorm:"type:varchar(255);not null" json:"name"`
-	Description string         `gorm:"type:text" json:"description"`
-	Color       string         `gorm:"type:varchar(7);default:'#3B82F6'" json:"color"`
-	Semester    string         `gorm:"type:varchar(20)" json:"semester"`
-	Year        int            `json:"year"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	ID               uuid.UUID      `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
+	UserID           uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
+	InstitutionID    string         `gorm:"type:varchar(255);index" json:"institution_id,omitempty"`
+	Code             string         `gorm:"type:varchar(50);index" json:"code,omitempty"`
+	CourseOfferingID string         `gorm:"type:varchar(255);index" json:"course_offering_id,omitempty"`
+	Name             string         `gorm:"type:varchar(255);not null" json:"name"`
+	Description      string         `gorm:"type:text" json:"description"`
+	Color            string         `gorm:"type:varchar(7);default:'#3B82F6'" json:"color"`
+	Semester         string         `gorm:"type:varchar(20)" json:"semester"`
+	Year             int            `json:"year"`
+	CreditUnits      int            `gorm:"type:int;default:3" json:"credit_units"`
+	Syllabus         string         `gorm:"type:text" json:"syllabus,omitempty"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Associations
 	Materials      []Material      `gorm:"foreignKey:CourseID" json:"materials,omitempty"`
@@ -45,26 +50,44 @@ const (
 	ProcessingStatusFailed     ProcessingStatus = "failed"
 )
 
+// TranscriptionStatus represents audio transcription status.
+type TranscriptionStatus string
+
+const (
+	TranscriptionStatusNone       = "none"
+	TranscriptionStatusPending    = "pending"
+	TranscriptionStatusProcessing = "processing"
+	TranscriptionStatusCompleted  = "completed"
+	TranscriptionStatusFailed     = "failed"
+)
+
 // Material represents a study material/document.
 type Material struct {
-	ID                uuid.UUID        `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
-	UserID            uuid.UUID        `gorm:"type:uuid;not null;index" json:"user_id"`
-	CourseID          *uuid.UUID       `gorm:"type:uuid;index" json:"course_id,omitempty"`
-	Title             string           `gorm:"type:varchar(255);not null" json:"title"`
-	FileURL           string           `gorm:"type:varchar(500)" json:"file_url,omitempty"`
-	FileSize          int64            `json:"file_size,omitempty"`
-	MimeType          string           `gorm:"type:varchar(100)" json:"mime_type,omitempty"`
-	ProcessingStatus  ProcessingStatus `gorm:"type:varchar(20);default:'pending'" json:"processing_status"`
-	Summary           string           `gorm:"type:text" json:"summary,omitempty"`
-	AudioURL          string           `gorm:"type:varchar(500)" json:"audio_url,omitempty"`
-	CreatedAt         time.Time        `json:"created_at"`
-	UpdatedAt         time.Time        `json:"updated_at"`
-	DeletedAt         gorm.DeletedAt   `gorm:"index" json:"-"`
+	ID                  uuid.UUID        `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
+	UserID              uuid.UUID        `gorm:"type:uuid;not null;index" json:"user_id"`
+	CourseID            *uuid.UUID       `gorm:"type:uuid;index" json:"course_id,omitempty"`
+	CourseOfferingID    string           `gorm:"type:varchar(255);index" json:"course_offering_id,omitempty"`
+	Title               string           `gorm:"type:varchar(255);not null" json:"title"`
+	FileURL             string           `gorm:"type:varchar(500)" json:"file_url,omitempty"`
+	FileSize            int64            `json:"file_size,omitempty"`
+	MimeType            string           `gorm:"type:varchar(100)" json:"mime_type,omitempty"`
+	Sha256Checksum      string           `gorm:"type:varchar(64);index" json:"sha256_checksum,omitempty"`
+	Version             int              `gorm:"type:int;default:1" json:"version"`
+	TrackingID          string           `gorm:"type:varchar(100);index" json:"tracking_id,omitempty"`
+	DurationSeconds     int              `gorm:"type:int" json:"duration_seconds,omitempty"`
+	ProcessingStatus    ProcessingStatus `gorm:"type:varchar(20);default:'pending'" json:"processing_status"`
+	TranscriptionStatus string           `gorm:"type:varchar(20);default:'none'" json:"transcription_status"`
+	TranscriptionText   string           `gorm:"type:text" json:"transcription_text,omitempty"`
+	Summary             string           `gorm:"type:text" json:"summary,omitempty"`
+	AudioURL            string           `gorm:"type:varchar(500)" json:"audio_url,omitempty"`
+	CreatedAt           time.Time        `json:"created_at"`
+	UpdatedAt           time.Time        `json:"updated_at"`
+	DeletedAt           gorm.DeletedAt   `gorm:"index" json:"-"`
 
 	// Associations
-	Course   *Course    `gorm:"foreignKey:CourseID" json:"course,omitempty"`
-	Quizzes  []Quiz     `gorm:"foreignKey:MaterialID" json:"quizzes,omitempty"`
-	Decks    []FlashcardDeck `gorm:"foreignKey:MaterialID" json:"decks,omitempty"`
+	Course  *Course         `gorm:"foreignKey:CourseID" json:"course,omitempty"`
+	Quizzes []Quiz          `gorm:"foreignKey:MaterialID" json:"quizzes,omitempty"`
+	Decks   []FlashcardDeck `gorm:"foreignKey:MaterialID" json:"decks,omitempty"`
 }
 
 // TableName specifies the table name for Material.
@@ -83,23 +106,23 @@ const (
 
 // Quiz represents a quiz/test.
 type Quiz struct {
-	ID               uuid.UUID        `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
-	UserID           uuid.UUID        `gorm:"type:uuid;not null;index" json:"user_id"`
-	CourseID         *uuid.UUID       `gorm:"type:uuid;index" json:"course_id,omitempty"`
-	MaterialID       *uuid.UUID       `gorm:"type:uuid;index" json:"material_id,omitempty"`
-	Title            string           `gorm:"type:varchar(255);not null" json:"title"`
-	Description      string           `gorm:"type:text" json:"description,omitempty"`
-	TimeLimitMinutes int              `json:"time_limit_minutes,omitempty"`
-	Difficulty       DifficultyLevel  `gorm:"type:varchar(20)" json:"difficulty,omitempty"`
-	ShuffleQuestions bool             `gorm:"default:false" json:"shuffle_questions"`
-	CreatedAt        time.Time        `json:"created_at"`
-	UpdatedAt        time.Time        `json:"updated_at"`
-	DeletedAt        gorm.DeletedAt   `gorm:"index" json:"-"`
+	ID               uuid.UUID       `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
+	UserID           uuid.UUID       `gorm:"type:uuid;not null;index" json:"user_id"`
+	CourseID         *uuid.UUID      `gorm:"type:uuid;index" json:"course_id,omitempty"`
+	MaterialID       *uuid.UUID      `gorm:"type:uuid;index" json:"material_id,omitempty"`
+	Title            string          `gorm:"type:varchar(255);not null" json:"title"`
+	Description      string          `gorm:"type:text" json:"description,omitempty"`
+	TimeLimitMinutes int             `json:"time_limit_minutes,omitempty"`
+	Difficulty       DifficultyLevel `gorm:"type:varchar(20)" json:"difficulty,omitempty"`
+	ShuffleQuestions bool            `gorm:"default:false" json:"shuffle_questions"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt  `gorm:"index" json:"-"`
 
 	// Associations
-	Course    *Course         `gorm:"foreignKey:CourseID" json:"course,omitempty"`
-	Material  *Material       `gorm:"foreignKey:MaterialID" json:"material,omitempty"`
-	Questions []QuizQuestion  `gorm:"foreignKey:QuizID;order:order_index" json:"questions,omitempty"`
+	Course    *Course        `gorm:"foreignKey:CourseID" json:"course,omitempty"`
+	Material  *Material      `gorm:"foreignKey:MaterialID" json:"material,omitempty"`
+	Questions []QuizQuestion `gorm:"foreignKey:QuizID;order:order_index" json:"questions,omitempty"`
 }
 
 // TableName specifies the table name for Quiz.
@@ -185,8 +208,8 @@ type FlashcardDeck struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Associations
-	Course    *Course     `gorm:"foreignKey:CourseID" json:"course,omitempty"`
-	Material  *Material   `gorm:"foreignKey:MaterialID" json:"material,omitempty"`
+	Course     *Course     `gorm:"foreignKey:CourseID" json:"course,omitempty"`
+	Material   *Material   `gorm:"foreignKey:MaterialID" json:"material,omitempty"`
 	Flashcards []Flashcard `gorm:"foreignKey:DeckID;order:order_index" json:"flashcards,omitempty"`
 }
 

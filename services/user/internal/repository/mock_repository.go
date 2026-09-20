@@ -293,3 +293,72 @@ func (m *MockJWTKeyRepository) DeactivateAllKeys(ctx context.Context) error {
 	}
 	return nil
 }
+
+// MockMembershipRepository is a mock implementation of MembershipRepository.
+type MockMembershipRepository struct {
+	CreateFunc                  func(ctx context.Context, membership *model.InstitutionMembership) error
+	GetByIDFunc                 func(ctx context.Context, id uuid.UUID) (*model.InstitutionMembership, error)
+	GetByUserAndInstitutionFunc func(ctx context.Context, userID uuid.UUID, institutionID string) (*model.InstitutionMembership, error)
+	ListByUserIDFunc            func(ctx context.Context, userID uuid.UUID) ([]model.InstitutionMembership, error)
+	ListByInstitutionIDFunc     func(ctx context.Context, institutionID string) ([]model.InstitutionMembership, error)
+	UpdateFunc                  func(ctx context.Context, membership *model.InstitutionMembership) error
+	SetDefaultFunc              func(ctx context.Context, userID uuid.UUID, membershipID uuid.UUID) error
+	DeleteFunc                  func(ctx context.Context, id uuid.UUID) error
+}
+
+func (m *MockMembershipRepository) Create(ctx context.Context, membership *model.InstitutionMembership) error {
+	if m.CreateFunc != nil {
+		return m.CreateFunc(ctx, membership)
+	}
+	return nil
+}
+
+func (m *MockMembershipRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.InstitutionMembership, error) {
+	if m.GetByIDFunc != nil {
+		return m.GetByIDFunc(ctx, id)
+	}
+	return nil, nil
+}
+
+func (m *MockMembershipRepository) GetByUserAndInstitution(ctx context.Context, userID uuid.UUID, institutionID string) (*model.InstitutionMembership, error) {
+	if m.GetByUserAndInstitutionFunc != nil {
+		return m.GetByUserAndInstitutionFunc(ctx, userID, institutionID)
+	}
+	return nil, nil
+}
+
+func (m *MockMembershipRepository) ListByUserID(ctx context.Context, userID uuid.UUID) ([]model.InstitutionMembership, error) {
+	if m.ListByUserIDFunc != nil {
+		return m.ListByUserIDFunc(ctx, userID)
+	}
+	return nil, nil
+}
+
+func (m *MockMembershipRepository) ListByInstitutionID(ctx context.Context, institutionID string) ([]model.InstitutionMembership, error) {
+	if m.ListByInstitutionIDFunc != nil {
+		return m.ListByInstitutionIDFunc(ctx, institutionID)
+	}
+	return nil, nil
+}
+
+func (m *MockMembershipRepository) Update(ctx context.Context, membership *model.InstitutionMembership) error {
+	if m.UpdateFunc != nil {
+		return m.UpdateFunc(ctx, membership)
+	}
+	return nil
+}
+
+func (m *MockMembershipRepository) SetDefault(ctx context.Context, userID uuid.UUID, membershipID uuid.UUID) error {
+	if m.SetDefaultFunc != nil {
+		return m.SetDefaultFunc(ctx, userID, membershipID)
+	}
+	return nil
+}
+
+func (m *MockMembershipRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteFunc != nil {
+		return m.DeleteFunc(ctx, id)
+	}
+	return nil
+}
+

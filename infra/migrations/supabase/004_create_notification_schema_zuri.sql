@@ -2,7 +2,7 @@
 -- This migration sets up tables for push notifications, emails, and scheduling
 
 -- Create notification schema
-CREATE SCHEMA IF NOT EXISTS notification;
+CREATE SCHEMA IF NOT EXISTS zuri_notification;
 
 -- Notification preferences per user
 CREATE TABLE IF NOT EXISTS zuri_notification.preferences (
@@ -164,7 +164,7 @@ SELECT
     u.email as user_email
 FROM zuri_notification.queue q
 JOIN zuri_notification.preferences p ON q.user_id = p.user_id
-JOIN auth.users u ON q.user_id = u.id
+JOIN zuri_auth.users u ON q.user_id = u.id
 WHERE q.status = 'pending'
 AND q.scheduled_at <= CURRENT_TIMESTAMP;
 

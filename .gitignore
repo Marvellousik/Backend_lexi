@@ -1,6 +1,8 @@
 # ── Environment & Secrets ──────────────────────────────────────────────────
 .env
 .env.*
+!.env.example
+!infra/.env.example
 infra/.env
 *.pem
 *.key
@@ -50,5 +52,6 @@ zuri-Python Services/services/audio/temp_audio/*
 zuri-Python Services/services/ingestion/*.json
 zuri-Python Services/services/ingestion/extracted_text.txt
 login.json
+.zuri/
 tmp_*
 test_*.txt

@@ -27,6 +27,7 @@ type User struct {
 	VerificationCodeExpiresAt *time.Time `json:"-"`
 	IsActive             bool           `gorm:"default:true" json:"is_active"`
 	Role                 string         `gorm:"type:varchar(20);default:'student'" json:"role"`
+	InstitutionID        string         `gorm:"type:varchar(255);index" json:"institution_id,omitempty"`
 	CreatedAt            time.Time      `json:"created_at"`
 	UpdatedAt            time.Time      `json:"updated_at"`
 	DeletedAt            gorm.DeletedAt `gorm:"index" json:"-"`
@@ -232,4 +233,54 @@ type TokenBlacklist struct {
 // TableName specifies the table name for TokenBlacklist.
 func (TokenBlacklist) TableName() string {
 	return "zuri_auth.token_blacklist"
+}
+
+// Role represents a canonical role within the auth domain.
+type Role struct {
+	ID          string    `gorm:"type:varchar(50);primary_key" json:"id"`
+	Name        string    `gorm:"type:varchar(100);not null" json:"name"`
+	Description string    `gorm:"type:text" json:"description,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// TableName specifies the table name for Role.
+func (Role) TableName() string {
+	return "zuri_auth.roles"
+}
+
+// Permission represents a system capability/action on a resource.
+type Permission struct {
+	ID          string    `gorm:"type:varchar(100);primary_key" json:"id"`
+	Name        string    `gorm:"type:varchar(100);not null" json:"name"`
+	Resource    string    `gorm:"type:varchar(50);not null" json:"resource"`
+	Action      string    `gorm:"type:varchar(50);not null" json:"action"`
+	Description string    `gorm:"type:text" json:"description,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// TableName specifies the table name for Permission.
+func (Permission) TableName() string {
+	return "zuri_auth.permissions"
+}
+
+// InstitutionMembership associates a User with an Institution and Role.
+type InstitutionMembership struct {
+	ID            uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
+	UserID        uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
+	InstitutionID string    `gorm:"type:varchar(255);not null" json:"institution_id"`
+	Role          string    `gorm:"type:varchar(50);not null;default:'student'" json:"role"`
+	DepartmentID  string    `gorm:"type:varchar(255)" json:"department_id,omitempty"`
+	Identifier    string    `gorm:"type:varchar(100)" json:"identifier,omitempty"` // Matric or Staff ID
+	IsDefault     bool      `gorm:"default:false" json:"is_default"`
+	Status        string    `gorm:"type:varchar(50);default:'active'" json:"status"` // active, pending, suspended
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+
+	// Associations
+	User User `gorm:"foreignKey:UserID" json:"-"`
+}
+
+// TableName specifies the table name for InstitutionMembership.
+func (InstitutionMembership) TableName() string {
+	return "zuri_auth.institution_memberships"
 }

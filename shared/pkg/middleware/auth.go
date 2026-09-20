@@ -4,10 +4,8 @@ package middleware
 import (
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 // AuthRequired returns a Gin middleware that validates requests.
@@ -44,52 +42,9 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
-		// ── Fallback path: direct call with JWT ───────────────────────────────
-		// Used for local development or service-to-service calls that bypass
-		// the gateway. Parse the token without verifying the signature since
-		// the gateway is the authoritative validator.
-		var tokenString string
-		authHeader := c.GetHeader("Authorization")
-		if authHeader != "" {
-			parts := strings.SplitN(authHeader, " ", 2)
-			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
-				c.Abort()
-				return
-			}
-			tokenString = parts[1]
-		} else {
-			// WebSocket fallback: token passed as ?token= query param
-			tokenString = c.Query("token")
-			if tokenString == "" {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization required"})
-				c.Abort()
-				return
-			}
-		}
-
-		token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
-			c.Abort()
-			return
-		}
-
-		userID, ok := claims["user_id"].(string)
-		if !ok || userID == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing user_id in token"})
-			c.Abort()
-			return
-		}
-
-		c.Set("user_id", userID)
-		c.Next()
+		// Reject any request that does not come from the trusted Gateway with a valid internal key
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: trusted internal gateway authentication required"})
+		c.Abort()
+		return
 	}
 }

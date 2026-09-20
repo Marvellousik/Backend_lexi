@@ -35,16 +35,12 @@ type Config struct {
 	AnalyticsServiceURL     string
 	NotificationServiceURL  string
 	SyncServiceURL          string
+	AcademicServiceURL      string
 	
-	// Python AI Services
-	AIOrchestratorURL       string
-	RetrievalServiceURL     string
-	AudioServiceURL         string
-	IngestionServiceURL     string
-	
-	// New AI Service (FastAPI monolith)
+	// AI Service & Providers
 	AIServiceURL            string
 	AIServiceTimeout        time.Duration
+	OpenRouterAPIKey        string
 	
 	// Security
 	InternalAPIKey          string
@@ -68,12 +64,10 @@ func Load() (*Config, error) {
 		AnalyticsServiceURL:     getEnv("ANALYTICS_SERVICE_URL", "http://localhost:8083"),
 		NotificationServiceURL:  getEnv("NOTIFICATION_SERVICE_URL", "http://localhost:8084"),
 		SyncServiceURL:          getEnv("SYNC_SERVICE_URL", "http://localhost:8085"),
-		AIOrchestratorURL:       getEnv("AI_ORCHESTRATOR_URL", "http://localhost:5005"),
-		RetrievalServiceURL:     getEnv("RETRIEVAL_SERVICE_URL", "http://localhost:5003"),
-		AudioServiceURL:         getEnv("AUDIO_SERVICE_URL", "http://localhost:5004"),
-		IngestionServiceURL:     getEnv("INGESTION_SERVICE_URL", "http://localhost:5002"),
-		AIServiceURL:            getEnv("AI_SERVICE_URL", "http://localhost:8000"),
+		AcademicServiceURL:      getEnv("ACADEMIC_SERVICE_URL", "http://localhost:8086"),
+		AIServiceURL:            getEnv("AI_SERVICE_URL", "http://localhost:5005"),
 		AIServiceTimeout:        getEnvDuration("AI_SERVICE_TIMEOUT", 120*time.Second),
+		OpenRouterAPIKey:        getEnv("OPENROUTER_API_KEY", ""),
 		InternalAPIKey:          getEnv("INTERNAL_API_KEY", "dev-internal-key"),
 	}
 	
@@ -93,14 +87,10 @@ func (c *Config) GetServiceURL(serviceName string) string {
 		return c.NotificationServiceURL
 	case "sync":
 		return c.SyncServiceURL
-	case "ai", "orchestrator":
-		return c.AIOrchestratorURL
-	case "retrieval":
-		return c.RetrievalServiceURL
-	case "audio":
-		return c.AudioServiceURL
-	case "ingestion":
-		return c.IngestionServiceURL
+	case "academic", "courses", "timetable":
+		return c.AcademicServiceURL
+	case "ai":
+		return c.AIServiceURL
 	default:
 		return ""
 	}

@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.25-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -20,13 +20,18 @@ COPY shared/ ./shared/
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -o gateway ./services/gateway/cmd/main.go
 
 # Final stage
-FROM alpine:latest
+FROM alpine:3.19
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates tzdata && \
+    addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
 
-WORKDIR /root/
+WORKDIR /app
 
 COPY --from=builder /app/gateway .
+RUN chown -R appuser:appgroup /app
+
+USER appuser
 
 EXPOSE 8080
 

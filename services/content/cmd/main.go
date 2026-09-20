@@ -243,12 +243,12 @@ func (cv *customValidator) Validate(i interface{}) error {
 func loggerMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		start := time.Now()
-		
+
 		err := next(c)
-		
+
 		latency := time.Since(start)
 		status := c.Response().Status
-		
+
 		logger.Info("request completed",
 			zap.String("method", c.Request().Method),
 			zap.String("path", c.Request().URL.Path),
@@ -257,7 +257,7 @@ func loggerMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			zap.String("ip", c.RealIP()),
 			zap.String("user_agent", c.Request().UserAgent()),
 		)
-		
+
 		return err
 	}
 }
@@ -268,10 +268,10 @@ func correlationIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		if correlationID == "" {
 			correlationID = generateCorrelationID()
 		}
-		
+
 		c.Set("correlation_id", correlationID)
 		c.Response().Header().Set("X-Correlation-ID", correlationID)
-		
+
 		return next(c)
 	}
 }

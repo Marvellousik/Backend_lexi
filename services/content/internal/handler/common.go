@@ -42,16 +42,16 @@ func getUserID(c echo.Context) (uuid.UUID, error) {
 			}
 		}
 	}
-	
+
 	if userIDStr == "" {
 		return uuid.Nil, errors.New("user ID not found")
 	}
-	
+
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		return uuid.Nil, err
 	}
-	
+
 	return userID, nil
 }
 

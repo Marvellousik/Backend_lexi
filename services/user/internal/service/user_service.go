@@ -3,7 +3,9 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/rsa"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -13,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -37,6 +40,9 @@ var (
 	ErrSessionNotFound        = errors.New("session not found")
 	ErrUnauthorized           = errors.New("unauthorized")
 	ErrEmailNotVerified       = errors.New("email not verified")
+	ErrMembershipNotFound     = errors.New("institution membership not found")
+	ErrMembershipInactive     = errors.New("institution membership is not active")
+	ErrMembershipAlreadyExists = errors.New("user already has a membership for this institution")
 )
 
 // EmailNotVerifiedError is returned when a user tries to log in but their email
@@ -75,6 +81,9 @@ type UserService interface {
 	ListSessions(ctx context.Context, userID string) ([]SessionResponse, error)
 	RevokeSession(ctx context.Context, userID string, sessionID string) error
 	GetPublicKey(ctx context.Context) (string, error)
+	ListMemberships(ctx context.Context, userID string) ([]MembershipResponse, error)
+	AddMembership(ctx context.Context, userID string, req *AddMembershipRequest) (*MembershipResponse, error)
+	SwitchActiveInstitution(ctx context.Context, userID string, institutionID string, clientInfo *ClientInfo) (*TokenResponse, error)
 }
 
 // ClientInfo holds information about the client making the request.
@@ -155,6 +164,33 @@ type SessionResponse struct {
 	IsCurrent    bool      `json:"is_current"`
 }
 
+// MembershipResponse represents an institution membership.
+type MembershipResponse struct {
+	ID            uuid.UUID `json:"id"`
+	UserID        uuid.UUID `json:"user_id"`
+	InstitutionID string    `json:"institution_id"`
+	Role          string    `json:"role"`
+	DepartmentID  string    `json:"department_id,omitempty"`
+	Identifier    string    `json:"identifier,omitempty"`
+	IsDefault     bool      `json:"is_default"`
+	Status        string    `json:"status"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+// AddMembershipRequest represents a request to associate with an institution.
+type AddMembershipRequest struct {
+	InstitutionID string `json:"institution_id" validate:"required"`
+	Role          string `json:"role" validate:"required"`
+	DepartmentID  string `json:"department_id,omitempty"`
+	Identifier    string `json:"identifier,omitempty"`
+	IsDefault     bool   `json:"is_default,omitempty"`
+}
+
+// SwitchInstitutionRequest represents a request to switch active institution.
+type SwitchInstitutionRequest struct {
+	InstitutionID string `json:"institution_id" validate:"required"`
+}
+
 // userService implements UserService.
 type userService struct {
 	userRepo             repository.UserRepository
@@ -162,6 +198,7 @@ type userService struct {
 	sessionRepo          repository.SessionRepository
 	passwordResetRepo    repository.PasswordResetRepository
 	jwtKeyRepo           repository.JWTKeyRepository
+	membershipRepo       repository.MembershipRepository
 	jwtManager           *auth.JWTManager
 	passwordHasher       *auth.PasswordHasher
 	keyEncryption        *auth.KeyEncryption
@@ -177,6 +214,7 @@ func NewUserService(
 	sessionRepo repository.SessionRepository,
 	passwordResetRepo repository.PasswordResetRepository,
 	jwtKeyRepo repository.JWTKeyRepository,
+	membershipRepo repository.MembershipRepository,
 	redisClient RedisClient,
 	notificationClient *client.NotificationClient,
 	cfg *config.UserServiceConfig,
@@ -202,6 +240,7 @@ func NewUserService(
 		sessionRepo:        sessionRepo,
 		passwordResetRepo:  passwordResetRepo,
 		jwtKeyRepo:         jwtKeyRepo,
+		membershipRepo:     membershipRepo,
 		jwtManager:         jwtManager,
 		passwordHasher:     passwordHasher,
 		keyEncryption:      keyEncryption,
@@ -491,11 +530,12 @@ func (s *userService) Login(ctx context.Context, req *LoginRequest, clientInfo *
 
 // createTokenPair creates a new access and refresh token pair.
 func (s *userService) createTokenPair(ctx context.Context, user *model.User, clientInfo *ClientInfo) (*TokenResponse, error) {
-	// Generate tokens with role
-	tokenPair, err := s.jwtManager.GenerateTokenPair(
+	// Generate tokens with role and tenant institution ID
+	tokenPair, err := s.jwtManager.GenerateTenantTokenPair(
 		user.ID.String(),
 		user.Email,
 		user.Role,
+		user.InstitutionID,
 		s.config.AccessTokenTTL,
 		s.config.RefreshTokenTTL,
 	)
@@ -606,11 +646,44 @@ func (s *userService) Logout(ctx context.Context, userID string, accessTokenJTI 
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid user ID")
 	}
 
+	// Extract JTI if passed as a full JWT token
+	if strings.Contains(accessTokenJTI, ".") {
+		parser := jwt.NewParser()
+		token, _, err := parser.ParseUnverified(accessTokenJTI, &auth.Claims{})
+		if err == nil {
+			if claims, ok := token.Claims.(*auth.Claims); ok && claims.ID != "" {
+				accessTokenJTI = claims.ID
+			}
+		}
+	}
+	// Extract JTI from context if not passed
+	if accessTokenJTI == "" {
+		if jti, ok := ctx.Value("jti").(string); ok && jti != "" {
+			accessTokenJTI = jti
+		} else if tokenID, ok := ctx.Value("token_id").(string); ok && tokenID != "" {
+			accessTokenJTI = tokenID
+		} else if rawToken, ok := ctx.Value("access_token").(string); ok && rawToken != "" {
+			parser := jwt.NewParser()
+			token, _, err := parser.ParseUnverified(rawToken, &auth.Claims{})
+			if err == nil {
+				if claims, ok := token.Claims.(*auth.Claims); ok && claims.ID != "" {
+					accessTokenJTI = claims.ID
+				}
+			}
+		}
+	}
+
 	// Blacklist the access token
-	if accessTokenJTI != "" {
+	if accessTokenJTI != "" && s.redisClient != nil {
+		ttl := s.config.AccessTokenTTL
+		if ttl <= 0 {
+			ttl = 15 * time.Minute
+		}
 		blacklistKey := fmt.Sprintf("token_blacklist:%s", accessTokenJTI)
-		if err := s.redisClient.Set(ctx, blacklistKey, userID, s.config.AccessTokenTTL); err != nil {
-			logger.Error("failed to blacklist token")
+		if err := s.redisClient.Set(ctx, blacklistKey, userID, ttl); err != nil {
+			logger.Error("failed to blacklist token", zap.Error(err), zap.String("jti", accessTokenJTI))
+		} else {
+			logger.Info("blacklisted access token", zap.String("jti", accessTokenJTI), zap.String("user_id", userID), zap.Duration("ttl", ttl))
 		}
 	}
 
@@ -758,9 +831,11 @@ func (s *userService) RequestPasswordReset(ctx context.Context, email string) er
 
 	// Generate reset token
 	resetTokenBytes := make([]byte, 32)
-	// In production, use crypto/rand
-	// For simplicity, using timestamp-based generation here
-	resetToken := auth.HashRefreshToken(string(resetTokenBytes))
+	if _, err := rand.Read(resetTokenBytes); err != nil {
+		logger.Error("failed to generate random reset token", zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to generate reset token")
+	}
+	resetToken := hex.EncodeToString(resetTokenBytes)
 	
 	passwordReset := &model.PasswordReset{
 		UserID:    user.ID,
@@ -996,3 +1071,136 @@ func getClientIP(r *http.Request) string {
 	}
 	return host
 }
+
+// ListMemberships returns all institutional memberships for a given user.
+func (s *userService) ListMemberships(ctx context.Context, userID string) ([]MembershipResponse, error) {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid user ID")
+	}
+
+	if s.membershipRepo == nil {
+		return []MembershipResponse{}, nil
+	}
+
+	memberships, err := s.membershipRepo.ListByUserID(ctx, id)
+	if err != nil {
+		logger.Error("failed to list memberships by user ID", zap.Error(err), zap.String("user_id", userID))
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
+	}
+
+	res := make([]MembershipResponse, len(memberships))
+	for i, m := range memberships {
+		res[i] = MembershipResponse{
+			ID:            m.ID,
+			UserID:        m.UserID,
+			InstitutionID: m.InstitutionID,
+			Role:          m.Role,
+			DepartmentID:  m.DepartmentID,
+			Identifier:    m.Identifier,
+			IsDefault:     m.IsDefault,
+			Status:        m.Status,
+			CreatedAt:     m.CreatedAt,
+		}
+	}
+	return res, nil
+}
+
+// AddMembership creates a new institutional membership for a user.
+func (s *userService) AddMembership(ctx context.Context, userID string, req *AddMembershipRequest) (*MembershipResponse, error) {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid user ID")
+	}
+
+	if s.membershipRepo == nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "membership service unavailable")
+	}
+
+	existing, err := s.membershipRepo.GetByUserAndInstitution(ctx, id, req.InstitutionID)
+	if err != nil {
+		logger.Error("failed to verify existing membership", zap.Error(err))
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
+	}
+	if existing != nil {
+		return nil, echo.NewHTTPError(http.StatusConflict, "user already has a membership for this institution")
+	}
+
+	now := time.Now()
+	membership := &model.InstitutionMembership{
+		ID:            uuid.New(),
+		UserID:        id,
+		InstitutionID: req.InstitutionID,
+		Role:          req.Role,
+		DepartmentID:  req.DepartmentID,
+		Identifier:    req.Identifier,
+		IsDefault:     req.IsDefault,
+		Status:        "active",
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	if err := s.membershipRepo.Create(ctx, membership); err != nil {
+		logger.Error("failed to create institution membership", zap.Error(err))
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
+	}
+
+	return &MembershipResponse{
+		ID:            membership.ID,
+		UserID:        membership.UserID,
+		InstitutionID: membership.InstitutionID,
+		Role:          membership.Role,
+		DepartmentID:  membership.DepartmentID,
+		Identifier:    membership.Identifier,
+		IsDefault:     membership.IsDefault,
+		Status:        membership.Status,
+		CreatedAt:     membership.CreatedAt,
+	}, nil
+}
+
+// SwitchActiveInstitution switches the user's active tenant institution and role, issuing a fresh token pair.
+func (s *userService) SwitchActiveInstitution(ctx context.Context, userID string, institutionID string, clientInfo *ClientInfo) (*TokenResponse, error) {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid user ID")
+	}
+
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		logger.Error("failed to get user by ID", zap.Error(err), zap.String("user_id", userID))
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
+	}
+	if user == nil {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "user not found")
+	}
+	if !user.IsActive {
+		return nil, echo.NewHTTPError(http.StatusUnauthorized, "account is deactivated")
+	}
+
+	if s.membershipRepo == nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "membership service unavailable")
+	}
+
+	membership, err := s.membershipRepo.GetByUserAndInstitution(ctx, id, institutionID)
+	if err != nil {
+		logger.Error("failed to get membership", zap.Error(err), zap.String("user_id", userID), zap.String("institution_id", institutionID))
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
+	}
+	if membership == nil {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "user is not an active member of this institution")
+	}
+	if membership.Status != "active" {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "institution membership is not active")
+	}
+
+	// Update user's active institutional context and active role
+	user.InstitutionID = membership.InstitutionID
+	user.Role = membership.Role
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		logger.Error("failed to update user active institution", zap.Error(err))
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
+	}
+
+	return s.createTokenPair(ctx, user, clientInfo)
+}
+
