@@ -1,9 +1,9 @@
 # Verification Test Log: Content & PDF Ingestion
 
-- **Execution Timestamp**: 2026-09-20T08:23:17.591480+00:00
+- **Execution Timestamp**: 2026-09-20T15:07:08.220101+00:00
 - **Tests Executed**: 3
 - **Passed**: 3 / 3 (100.0%)
-- **Average Latency**: `4.73 ms`
+- **Average Latency**: `3.85 ms`
 
 ---
 
@@ -12,14 +12,14 @@
 ### [TEST-PDF-01] PDF Upload & SHA-256 Provenance Tracking
 - **Verdict**: ✅ PASS
 - **Status Code**: `201`
-- **Response Time**: `0.05 ms`
+- **Response Time**: `0.07 ms`
 - **Endpoint**: `POST /api/v1/materials`
 
 #### Equivalent cURL Request
 ```bash
 curl -X POST "http://localhost:8080/api/v1/materials" \
   -H "Content-Type: multipart/form-data" \
-  -d '{"title": "CSC 301 Lecture Slides", "sha256_checksum": "8b102f53b7c4a362ab95eca5ff1d876290fcfb7275c3a6da0419e2a4788cfec7", "course_offering_id": "off_csc301_veritas", "tracking_id": "trk_3db3876db85d"}'
+  -d '{"title": "CSC 301 Lecture Slides", "sha256_checksum": "8b102f53b7c4a362ab95eca5ff1d876290fcfb7275c3a6da0419e2a4788cfec7", "course_offering_id": "off_csc301_veritas", "tracking_id": "trk_875de5841d75"}'
 ```
 
 #### Payload Package Sent
@@ -34,8 +34,8 @@ curl -X POST "http://localhost:8080/api/v1/materials" \
 ```json
 {
   "status": "success",
-  "material_id": "mat_8a9db521",
-  "tracking_id": "trk_3db3876db85d",
+  "material_id": "mat_30cb0ab4",
+  "tracking_id": "trk_875de5841d75",
   "sha256_checksum": "8b102f53b7c4a362ab95eca5ff1d876290fcfb7275c3a6da0419e2a4788cfec7",
   "file_size_bytes": 4678,
   "transcription_status": "none"
@@ -47,7 +47,7 @@ curl -X POST "http://localhost:8080/api/v1/materials" \
 ### [TEST-PDF-02] Multi-Page Extraction & Slide Text Segmentation
 - **Verdict**: ✅ PASS
 - **Status Code**: `200`
-- **Response Time**: `13.98 ms`
+- **Response Time**: `11.34 ms`
 - **Endpoint**: `EXTRACT internal://pdf/extract_pages`
 
 #### Equivalent cURL Request
@@ -76,7 +76,7 @@ curl -X POST "http://localhost:8080/api/v1/materials" \
 ### [TEST-PDF-03] Hierarchical Headings & Structured Section Parsing
 - **Verdict**: ✅ PASS
 - **Status Code**: `200`
-- **Response Time**: `0.16 ms`
+- **Response Time**: `0.14 ms`
 - **Endpoint**: `PARSE internal://pdf/parse_hierarchy`
 
 #### Equivalent cURL Request

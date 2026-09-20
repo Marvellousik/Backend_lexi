@@ -6,9 +6,9 @@
     "title": "Student Registration (POST /api/v1/auth/register)",
     "endpoint": "/api/v1/auth/register",
     "method": "POST",
-    "curl": "curl -X POST \"http://localhost:8080/api/v1/auth/register\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\": \"student_98267a@veritas.edu.ng\", \"password\": \"SecurePassword2026!\", \"first_name\": \"Emeka\", \"last_name\": \"Adeleke\", \"institution_id\": \"inst_veritas\", \"role\": \"student\"}'",
+    "curl": "curl -X POST \"http://localhost:8080/api/v1/auth/register\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\": \"student_d1c9a9@veritas.edu.ng\", \"password\": \"SecurePassword2026!\", \"first_name\": \"Emeka\", \"last_name\": \"Adeleke\", \"institution_id\": \"inst_veritas\", \"role\": \"student\"}'",
     "payload_sent": {
-      "email": "student_98267a@veritas.edu.ng",
+      "email": "student_d1c9a9@veritas.edu.ng",
       "password": "SecurePassword2026!",
       "first_name": "Emeka",
       "last_name": "Adeleke",
@@ -19,21 +19,21 @@
       "status": "success",
       "code": 201,
       "data": {
-        "id": "usr_test_5db8020a",
-        "email": "student_98267a@veritas.edu.ng",
+        "id": "usr_test_291cd2b7",
+        "email": "student_d1c9a9@veritas.edu.ng",
         "first_name": "Emeka",
         "last_name": "Adeleke",
         "role": "student",
         "institution_id": "inst_veritas",
         "is_verified": false,
-        "created_at": "2026-09-20T08:23:04.867735+00:00"
+        "created_at": "2026-09-20T15:06:53.713870+00:00"
       }
     },
     "status_code": 201,
-    "duration_ms": 52.29,
+    "duration_ms": 52.26,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:04.867914+00:00"
+    "timestamp": "2026-09-20T15:06:53.714168+00:00"
   },
   {
     "test_id": "TEST-AUTH-02",
@@ -56,7 +56,7 @@
     "duration_ms": 0.01,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:04.868161+00:00"
+    "timestamp": "2026-09-20T15:06:53.714488+00:00"
   },
   {
     "test_id": "TEST-AUTH-03",
@@ -65,24 +65,24 @@
     "title": "Email Verification Token (POST /api/v1/auth/verify-email)",
     "endpoint": "/api/v1/auth/verify-email",
     "method": "POST",
-    "curl": "curl -X POST \"http://localhost:8080/api/v1/auth/verify-email\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"token\": \"vtok_b7af01d47f4740ce9b7c231929f551bf\"}'",
+    "curl": "curl -X POST \"http://localhost:8080/api/v1/auth/verify-email\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"token\": \"vtok_a483d07f7d1a49eabbf403f838027628\"}'",
     "payload_sent": {
-      "token": "vtok_b7af01d47f4740ce9b7c231929f551bf"
+      "token": "vtok_a483d07f7d1a49eabbf403f838027628"
     },
     "response_received": {
       "status": "success",
       "message": "Email verified successfully",
       "data": {
-        "user_id": "usr_test_5db8020a",
-        "email": "student_98267a@veritas.edu.ng",
+        "user_id": "usr_test_291cd2b7",
+        "email": "student_d1c9a9@veritas.edu.ng",
         "is_verified": true
       }
     },
     "status_code": 200,
-    "duration_ms": 0.03,
+    "duration_ms": 0.37,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:04.868223+00:00"
+    "timestamp": "2026-09-20T15:06:53.714918+00:00"
   },
   {
     "test_id": "TEST-AUTH-04",
@@ -91,30 +91,30 @@
     "title": "RS256 JWT Login & Token Generation (POST /api/v1/auth/login)",
     "endpoint": "/api/v1/auth/login",
     "method": "POST",
-    "curl": "curl -X POST \"http://localhost:8080/api/v1/auth/login\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\": \"student_98267a@veritas.edu.ng\", \"password\": \"SecurePassword2026!\"}'",
+    "curl": "curl -X POST \"http://localhost:8080/api/v1/auth/login\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\": \"student_d1c9a9@veritas.edu.ng\", \"password\": \"SecurePassword2026!\"}'",
     "payload_sent": {
-      "email": "student_98267a@veritas.edu.ng",
+      "email": "student_d1c9a9@veritas.edu.ng",
       "password": "SecurePassword2026!"
     },
     "response_received": {
       "status": "success",
       "data": {
-        "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfdGVzdF81ZGI4MDIwYSIsImVtYWlsIjoic3R1ZGVudF85ODI2N2FAdmVyaXRhcy5lZHUubmciLCJpbnN0aXR1dGlvbl9pZCI6Imluc3RfdmVyaXRhcyIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzg5ODkyNTg0LCJleHAiOjE3ODk4OTM0ODQsImlzcyI6Inp1cmktdXNlci1zZXJ2aWNlIn0.CQdYFp8VHHasdL2ETw3cARJrrroXD1_4ADPS7PsL5OPFQCoFbJgg2nRch99lC7E_K90-imJei8_V6YlrRHmdrxujvZte4bpGBaFqN79AR6lufVUc-sUCMCR2WDt4dOR7oU1Ea1ItSPhSbWIBb0gXr--UhRolud7msSGcOFfK02N4dUzkFoA4wxL8Eulz0a7bGoBDaOB6Cm_roriOiN8zWxXdRmQahT5WB7WlFqUUiQ3SawOOMkbzTxTQDtk1kS_J0Q8fPxjzBDOB5K03NL8WNDoVUNZDv_Ex75rqbZTqcGX-QJnQ5TeneaBuEu_cRfUZS8dCAJP5sAVr-MaUKRp1Ug",
-        "refresh_token": "rft_68bdc563c7ec47a1bb9bc00d144e47dc",
+        "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfdGVzdF8yOTFjZDJiNyIsImVtYWlsIjoic3R1ZGVudF9kMWM5YTlAdmVyaXRhcy5lZHUubmciLCJpbnN0aXR1dGlvbl9pZCI6Imluc3RfdmVyaXRhcyIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzg5OTE2ODEzLCJleHAiOjE3ODk5MTc3MTMsImlzcyI6Inp1cmktdXNlci1zZXJ2aWNlIn0.ZISet--6QI8W_CnJZgNbnPom1B17FfE7wP5N-6IJvCwlALfeb5JmSI0ON_jwnFAEAQnTjQdDF8XUkgLBNkDlIDvz_h1coQnQD_iNvDPvC_20Yg_SzWbun-6rzZvWZfSSYMjk2tS8Ue8tMjUMwsies8DPaqjjIujF1lhcDWbWSkqX9RMJnyNxCvZjEAMcFW0FkviL4-gAabCAgbDvu6sZ7hV2BcNw8VKMzqQf2CB-HnsXtk7kxXsUPsNt0Rid7BWKXzxh78sgwo26PrN47pcvGUp8v0Z5ClGmQ3hsFY4wCqGhIUOUzmLJFMAJXOD7iMg9S8AggOnPkItQH_tx-IfurA",
+        "refresh_token": "rft_24012b16cb724c24aabc2da501e04074",
         "token_type": "Bearer",
         "expires_in": 900,
         "user": {
-          "id": "usr_test_5db8020a",
+          "id": "usr_test_291cd2b7",
           "role": "student",
           "institution_id": "inst_veritas"
         }
       }
     },
     "status_code": 200,
-    "duration_ms": 1.87,
+    "duration_ms": 2.08,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:04.870145+00:00"
+    "timestamp": "2026-09-20T15:06:53.717274+00:00"
   },
   {
     "test_id": "TEST-AUTH-05",
@@ -123,13 +123,13 @@
     "title": "Authenticated Profile Inspection (GET /api/v1/users/me)",
     "endpoint": "/api/v1/users/me",
     "method": "GET",
-    "curl": "curl -X GET \"http://localhost:8080/api/v1/users/me\" \\\n  -H \"Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfdGVzdF81ZGI4MDIwYSIsImVtYWlsIjoic3R1ZGVudF85ODI2N2FAdmVyaXRhcy5lZHUubmciLCJpbnN0aXR1dGlvbl9pZCI6Imluc3RfdmVyaXRhcyIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzg5ODkyNTg0LCJleHAiOjE3ODk4OTM0ODQsImlzcyI6Inp1cmktdXNlci1zZXJ2aWNlIn0.CQdYFp8VHHasdL2ETw3cARJrrroXD1_4ADPS7PsL5OPFQCoFbJgg2nRch99lC7E_K90-imJei8_V6YlrRHmdrxujvZte4bpGBaFqN79AR6lufVUc-sUCMCR2WDt4dOR7oU1Ea1ItSPhSbWIBb0gXr--UhRolud7msSGcOFfK02N4dUzkFoA4wxL8Eulz0a7bGoBDaOB6Cm_roriOiN8zWxXdRmQahT5WB7WlFqUUiQ3SawOOMkbzTxTQDtk1kS_J0Q8fPxjzBDOB5K03NL8WNDoVUNZDv_Ex75rqbZTqcGX-QJnQ5TeneaBuEu_cRfUZS8dCAJP5sAVr-MaUKRp1Ug\"",
+    "curl": "curl -X GET \"http://localhost:8080/api/v1/users/me\" \\\n  -H \"Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfdGVzdF8yOTFjZDJiNyIsImVtYWlsIjoic3R1ZGVudF9kMWM5YTlAdmVyaXRhcy5lZHUubmciLCJpbnN0aXR1dGlvbl9pZCI6Imluc3RfdmVyaXRhcyIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzg5OTE2ODEzLCJleHAiOjE3ODk5MTc3MTMsImlzcyI6Inp1cmktdXNlci1zZXJ2aWNlIn0.ZISet--6QI8W_CnJZgNbnPom1B17FfE7wP5N-6IJvCwlALfeb5JmSI0ON_jwnFAEAQnTjQdDF8XUkgLBNkDlIDvz_h1coQnQD_iNvDPvC_20Yg_SzWbun-6rzZvWZfSSYMjk2tS8Ue8tMjUMwsies8DPaqjjIujF1lhcDWbWSkqX9RMJnyNxCvZjEAMcFW0FkviL4-gAabCAgbDvu6sZ7hV2BcNw8VKMzqQf2CB-HnsXtk7kxXsUPsNt0Rid7BWKXzxh78sgwo26PrN47pcvGUp8v0Z5ClGmQ3hsFY4wCqGhIUOUzmLJFMAJXOD7iMg9S8AggOnPkItQH_tx-IfurA\"",
     "payload_sent": {},
     "response_received": {
       "status": "success",
       "data": {
-        "id": "usr_test_5db8020a",
-        "email": "student_98267a@veritas.edu.ng",
+        "id": "usr_test_291cd2b7",
+        "email": "student_d1c9a9@veritas.edu.ng",
         "first_name": "Emeka",
         "last_name": "Adeleke",
         "role": "student",
@@ -140,7 +140,7 @@
     "duration_ms": 0.01,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:04.870214+00:00"
+    "timestamp": "2026-09-20T15:06:53.717332+00:00"
   },
   {
     "test_id": "TEST-AUTH-06",
@@ -159,7 +159,7 @@
     "duration_ms": 0.0,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:04.870242+00:00"
+    "timestamp": "2026-09-20T15:06:53.717361+00:00"
   },
   {
     "test_id": "TEST-AUDIO-01",
@@ -182,10 +182,10 @@
       "voice": "default"
     },
     "status_code": 200,
-    "duration_ms": 8797.23,
+    "duration_ms": 10322.32,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:13.993252+00:00"
+    "timestamp": "2026-09-20T15:07:04.479107+00:00"
   },
   {
     "test_id": "TEST-AUDIO-02",
@@ -204,10 +204,10 @@
       "total_bytes": 260352
     },
     "status_code": 200,
-    "duration_ms": 0.57,
+    "duration_ms": 0.58,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:13.993907+00:00"
+    "timestamp": "2026-09-20T15:07:04.479754+00:00"
   },
   {
     "test_id": "TEST-AUDIO-03",
@@ -226,10 +226,10 @@
       ]
     },
     "status_code": 200,
-    "duration_ms": 0.8,
+    "duration_ms": 0.94,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:13.994745+00:00"
+    "timestamp": "2026-09-20T15:07:04.480725+00:00"
   },
   {
     "test_id": "TEST-PDF-01",
@@ -238,24 +238,24 @@
     "title": "PDF Upload & SHA-256 Provenance Tracking",
     "endpoint": "/api/v1/materials",
     "method": "POST",
-    "curl": "curl -X POST \"http://localhost:8080/api/v1/materials\" \\\n  -H \"Content-Type: multipart/form-data\" \\\n  -d '{\"title\": \"CSC 301 Lecture Slides\", \"sha256_checksum\": \"8b102f53b7c4a362ab95eca5ff1d876290fcfb7275c3a6da0419e2a4788cfec7\", \"course_offering_id\": \"off_csc301_veritas\", \"tracking_id\": \"trk_3db3876db85d\"}'",
+    "curl": "curl -X POST \"http://localhost:8080/api/v1/materials\" \\\n  -H \"Content-Type: multipart/form-data\" \\\n  -d '{\"title\": \"CSC 301 Lecture Slides\", \"sha256_checksum\": \"8b102f53b7c4a362ab95eca5ff1d876290fcfb7275c3a6da0419e2a4788cfec7\", \"course_offering_id\": \"off_csc301_veritas\", \"tracking_id\": \"trk_875de5841d75\"}'",
     "payload_sent": {
       "filename": "csc301_dynamic_programming_lecture.pdf",
       "size": 4678
     },
     "response_received": {
       "status": "success",
-      "material_id": "mat_8a9db521",
-      "tracking_id": "trk_3db3876db85d",
+      "material_id": "mat_30cb0ab4",
+      "tracking_id": "trk_875de5841d75",
       "sha256_checksum": "8b102f53b7c4a362ab95eca5ff1d876290fcfb7275c3a6da0419e2a4788cfec7",
       "file_size_bytes": 4678,
       "transcription_status": "none"
     },
     "status_code": 201,
-    "duration_ms": 0.05,
+    "duration_ms": 0.07,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.630226+00:00"
+    "timestamp": "2026-09-20T15:07:05.275863+00:00"
   },
   {
     "test_id": "TEST-PDF-02",
@@ -274,10 +274,10 @@
       "page_2_chars": 1019
     },
     "status_code": 200,
-    "duration_ms": 13.98,
+    "duration_ms": 11.34,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.644271+00:00"
+    "timestamp": "2026-09-20T15:07:05.287294+00:00"
   },
   {
     "test_id": "TEST-PDF-03",
@@ -299,10 +299,10 @@
       "figures_found": 0
     },
     "status_code": 200,
-    "duration_ms": 0.16,
+    "duration_ms": 0.14,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.644504+00:00"
+    "timestamp": "2026-09-20T15:07:05.287494+00:00"
   },
   {
     "test_id": "TEST-READ-01",
@@ -325,10 +325,10 @@
       ]
     },
     "status_code": 200,
-    "duration_ms": 0.3,
+    "duration_ms": 0.26,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.644875+00:00"
+    "timestamp": "2026-09-20T15:07:05.287817+00:00"
   },
   {
     "test_id": "TEST-READ-02",
@@ -362,7 +362,7 @@
     "duration_ms": 0.0,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.644947+00:00"
+    "timestamp": "2026-09-20T15:07:05.287886+00:00"
   },
   {
     "test_id": "TEST-STUDY-01",
@@ -405,7 +405,7 @@
     "duration_ms": 0.02,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.645005+00:00"
+    "timestamp": "2026-09-20T15:07:05.287939+00:00"
   },
   {
     "test_id": "TEST-STUDY-02",
@@ -451,7 +451,7 @@
     "duration_ms": 0.02,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.645060+00:00"
+    "timestamp": "2026-09-20T15:07:05.287989+00:00"
   },
   {
     "test_id": "TEST-STUDY-03",
@@ -484,7 +484,7 @@
     "duration_ms": 0.0,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.645103+00:00"
+    "timestamp": "2026-09-20T15:07:05.288027+00:00"
   },
   {
     "test_id": "TEST-TIME-01",
@@ -506,10 +506,10 @@
       "venue": "Lecture Theatre 2 (LT2)"
     },
     "status_code": 200,
-    "duration_ms": 0.69,
+    "duration_ms": 0.49,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.774741+00:00"
+    "timestamp": "2026-09-20T15:07:05.405975+00:00"
   },
   {
     "test_id": "TEST-TIME-02",
@@ -527,36 +527,36 @@
     },
     "response_received": {
       "gaps_detected": 1,
-      "gap_id": "27b35040-d2e0-43c7-984c-e381be6f1ef9",
+      "gap_id": "41476f81-6954-4aea-bea4-7c14f37cdf99",
       "prompt_question": "I have your CSC 399 (Research Methodology & Independent Study) class, but I don't know when it holds. What day and time is the lecture?"
     },
     "status_code": 200,
-    "duration_ms": 5.54,
+    "duration_ms": 5.36,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.782754+00:00"
+    "timestamp": "2026-09-20T15:07:05.413539+00:00"
   },
   {
     "test_id": "TEST-TIME-03",
     "service_key": "06_timetable_event_service",
     "service_name": "Timetable & Event Manager",
     "title": "Student Gap Verification Resolution & Timetable Slot Logging",
-    "endpoint": "/api/v1/academic/context-gaps/27b35040-d2e0-43c7-984c-e381be6f1ef9/resolve",
+    "endpoint": "/api/v1/academic/context-gaps/41476f81-6954-4aea-bea4-7c14f37cdf99/resolve",
     "method": "POST",
-    "curl": "curl -X POST \"http://localhost:8080/api/v1/academic/context-gaps/27b35040-d2e0-43c7-984c-e381be6f1ef9/resolve\" \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-User-ID: usr_student_gap_test\" \\\n  -d '{\"response_value\": \"Monday 10:00 - 12:00 in Lecture Theatre 2 (LT2)\"}'",
+    "curl": "curl -X POST \"http://localhost:8080/api/v1/academic/context-gaps/41476f81-6954-4aea-bea4-7c14f37cdf99/resolve\" \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-User-ID: usr_student_gap_test\" \\\n  -d '{\"response_value\": \"Monday 10:00 - 12:00 in Lecture Theatre 2 (LT2)\"}'",
     "payload_sent": {
       "response_value": "Monday 10:00 - 12:00 in Lecture Theatre 2 (LT2)"
     },
     "response_received": {
-      "gap_id": "27b35040-d2e0-43c7-984c-e381be6f1ef9",
+      "gap_id": "41476f81-6954-4aea-bea4-7c14f37cdf99",
       "status": "resolved",
       "message": "Thank you! Your academic context has been updated."
     },
     "status_code": 200,
-    "duration_ms": 3.89,
+    "duration_ms": 3.61,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.786707+00:00"
+    "timestamp": "2026-09-20T15:07:05.417208+00:00"
   },
   {
     "test_id": "TEST-PRO-01",
@@ -587,10 +587,10 @@
       ]
     },
     "status_code": 200,
-    "duration_ms": 8.43,
+    "duration_ms": 8.38,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.797091+00:00"
+    "timestamp": "2026-09-20T15:07:05.427598+00:00"
   },
   {
     "test_id": "TEST-PRO-02",
@@ -613,7 +613,7 @@
     "duration_ms": 0.0,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.797154+00:00"
+    "timestamp": "2026-09-20T15:07:05.427646+00:00"
   },
   {
     "test_id": "TEST-PRO-03",
@@ -624,7 +624,7 @@
     "method": "EVALUATE",
     "curl": "# ProactiveGovernor spam rules: max 2/day, 4h cooldown, quiet hours",
     "payload_sent": {
-      "user_id": "usr_test_5db8020a",
+      "user_id": "usr_test_291cd2b7",
       "event_type": "PRE_CLASS_ALERT"
     },
     "response_received": {
@@ -632,10 +632,10 @@
       "governor_reason": "Intervention passed governor checks."
     },
     "status_code": 200,
-    "duration_ms": 7.96,
+    "duration_ms": 4.62,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:14.805146+00:00"
+    "timestamp": "2026-09-20T15:07:05.432292+00:00"
   },
   {
     "test_id": "TEST-GW-01",
@@ -659,10 +659,10 @@
       "sample": "=== RUN   TestComputePromptHash\n--- PASS: TestComputePromptHash (0.00s)\n=== RUN   TestCache_GetAndSet\n--- PASS: TestCache_GetAndSet (0.00s)\n=== RUN   TestUsageRecord_Validation\n--- PASS: TestUsageReco"
     },
     "status_code": 200,
-    "duration_ms": 548.18,
+    "duration_ms": 518.45,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:15.353604+00:00"
+    "timestamp": "2026-09-20T15:07:05.950900+00:00"
   },
   {
     "test_id": "TEST-GW-02",
@@ -684,7 +684,7 @@
     "duration_ms": 0.02,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:15.353692+00:00"
+    "timestamp": "2026-09-20T15:07:05.950992+00:00"
   },
   {
     "test_id": "TEST-E2E-01",
@@ -710,12 +710,12 @@
     "response_received": {
       "exit_code": 0,
       "summary": "Complete 9-stage pilot contract verified",
-      "log": "ritas_pilot_e2e.py::test_veritas_pilot_adaptive_practice_and_gap_resolution PASSED [ 71%]\ntests/integration/test_veritas_pilot_e2e.py::test_veritas_pilot_lecturer_dashboard_and_intervention PASSED [ 85%]\ntests/integration/test_veritas_pilot_e2e.py::test_veritas_pilot_administration_and_cost_intelligence PASSED [100%]\n\n============================== 7 passed in 1.26s =============================="
+      "log": "ritas_pilot_e2e.py::test_veritas_pilot_adaptive_practice_and_gap_resolution PASSED [ 71%]\ntests/integration/test_veritas_pilot_e2e.py::test_veritas_pilot_lecturer_dashboard_and_intervention PASSED [ 85%]\ntests/integration/test_veritas_pilot_e2e.py::test_veritas_pilot_administration_and_cost_intelligence PASSED [100%]\n\n============================== 7 passed in 1.24s =============================="
     },
     "status_code": 200,
-    "duration_ms": 2235.92,
+    "duration_ms": 2267.55,
     "passed": true,
     "notes": "",
-    "timestamp": "2026-09-20T08:23:17.589670+00:00"
+    "timestamp": "2026-09-20T15:07:08.218604+00:00"
   }
 ]

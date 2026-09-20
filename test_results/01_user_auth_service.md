@@ -1,9 +1,9 @@
 # Verification Test Log: User & Auth Service
 
-- **Execution Timestamp**: 2026-09-20T08:23:17.589775+00:00
+- **Execution Timestamp**: 2026-09-20T15:07:08.218704+00:00
 - **Tests Executed**: 6
 - **Passed**: 6 / 6 (100.0%)
-- **Average Latency**: `9.04 ms`
+- **Average Latency**: `9.12 ms`
 
 ---
 
@@ -12,20 +12,20 @@
 ### [TEST-AUTH-01] Student Registration (POST /api/v1/auth/register)
 - **Verdict**: ✅ PASS
 - **Status Code**: `201`
-- **Response Time**: `52.29 ms`
+- **Response Time**: `52.26 ms`
 - **Endpoint**: `POST /api/v1/auth/register`
 
 #### Equivalent cURL Request
 ```bash
 curl -X POST "http://localhost:8080/api/v1/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"email": "student_98267a@veritas.edu.ng", "password": "SecurePassword2026!", "first_name": "Emeka", "last_name": "Adeleke", "institution_id": "inst_veritas", "role": "student"}'
+  -d '{"email": "student_d1c9a9@veritas.edu.ng", "password": "SecurePassword2026!", "first_name": "Emeka", "last_name": "Adeleke", "institution_id": "inst_veritas", "role": "student"}'
 ```
 
 #### Payload Package Sent
 ```json
 {
-  "email": "student_98267a@veritas.edu.ng",
+  "email": "student_d1c9a9@veritas.edu.ng",
   "password": "SecurePassword2026!",
   "first_name": "Emeka",
   "last_name": "Adeleke",
@@ -40,14 +40,14 @@ curl -X POST "http://localhost:8080/api/v1/auth/register" \
   "status": "success",
   "code": 201,
   "data": {
-    "id": "usr_test_5db8020a",
-    "email": "student_98267a@veritas.edu.ng",
+    "id": "usr_test_291cd2b7",
+    "email": "student_d1c9a9@veritas.edu.ng",
     "first_name": "Emeka",
     "last_name": "Adeleke",
     "role": "student",
     "institution_id": "inst_veritas",
     "is_verified": false,
-    "created_at": "2026-09-20T08:23:04.867735+00:00"
+    "created_at": "2026-09-20T15:06:53.713870+00:00"
   }
 }
 ```
@@ -88,20 +88,20 @@ curl -X GET "http://localhost:8080/api/v1/auth/public-key" \
 ### [TEST-AUTH-03] Email Verification Token (POST /api/v1/auth/verify-email)
 - **Verdict**: ✅ PASS
 - **Status Code**: `200`
-- **Response Time**: `0.03 ms`
+- **Response Time**: `0.37 ms`
 - **Endpoint**: `POST /api/v1/auth/verify-email`
 
 #### Equivalent cURL Request
 ```bash
 curl -X POST "http://localhost:8080/api/v1/auth/verify-email" \
   -H "Content-Type: application/json" \
-  -d '{"token": "vtok_b7af01d47f4740ce9b7c231929f551bf"}'
+  -d '{"token": "vtok_a483d07f7d1a49eabbf403f838027628"}'
 ```
 
 #### Payload Package Sent
 ```json
 {
-  "token": "vtok_b7af01d47f4740ce9b7c231929f551bf"
+  "token": "vtok_a483d07f7d1a49eabbf403f838027628"
 }
 ```
 
@@ -111,8 +111,8 @@ curl -X POST "http://localhost:8080/api/v1/auth/verify-email" \
   "status": "success",
   "message": "Email verified successfully",
   "data": {
-    "user_id": "usr_test_5db8020a",
-    "email": "student_98267a@veritas.edu.ng",
+    "user_id": "usr_test_291cd2b7",
+    "email": "student_d1c9a9@veritas.edu.ng",
     "is_verified": true
   }
 }
@@ -123,20 +123,20 @@ curl -X POST "http://localhost:8080/api/v1/auth/verify-email" \
 ### [TEST-AUTH-04] RS256 JWT Login & Token Generation (POST /api/v1/auth/login)
 - **Verdict**: ✅ PASS
 - **Status Code**: `200`
-- **Response Time**: `1.87 ms`
+- **Response Time**: `2.08 ms`
 - **Endpoint**: `POST /api/v1/auth/login`
 
 #### Equivalent cURL Request
 ```bash
 curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"email": "student_98267a@veritas.edu.ng", "password": "SecurePassword2026!"}'
+  -d '{"email": "student_d1c9a9@veritas.edu.ng", "password": "SecurePassword2026!"}'
 ```
 
 #### Payload Package Sent
 ```json
 {
-  "email": "student_98267a@veritas.edu.ng",
+  "email": "student_d1c9a9@veritas.edu.ng",
   "password": "SecurePassword2026!"
 }
 ```
@@ -146,12 +146,12 @@ curl -X POST "http://localhost:8080/api/v1/auth/login" \
 {
   "status": "success",
   "data": {
-    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfdGVzdF81ZGI4MDIwYSIsImVtYWlsIjoic3R1ZGVudF85ODI2N2FAdmVyaXRhcy5lZHUubmciLCJpbnN0aXR1dGlvbl9pZCI6Imluc3RfdmVyaXRhcyIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzg5ODkyNTg0LCJleHAiOjE3ODk4OTM0ODQsImlzcyI6Inp1cmktdXNlci1zZXJ2aWNlIn0.CQdYFp8VHHasdL2ETw3cARJrrroXD1_4ADPS7PsL5OPFQCoFbJgg2nRch99lC7E_K90-imJei8_V6YlrRHmdrxujvZte4bpGBaFqN79AR6lufVUc-sUCMCR2WDt4dOR7oU1Ea1ItSPhSbWIBb0gXr--UhRolud7msSGcOFfK02N4dUzkFoA4wxL8Eulz0a7bGoBDaOB6Cm_roriOiN8zWxXdRmQahT5WB7WlFqUUiQ3SawOOMkbzTxTQDtk1kS_J0Q8fPxjzBDOB5K03NL8WNDoVUNZDv_Ex75rqbZTqcGX-QJnQ5TeneaBuEu_cRfUZS8dCAJP5sAVr-MaUKRp1Ug",
-    "refresh_token": "rft_68bdc563c7ec47a1bb9bc00d144e47dc",
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfdGVzdF8yOTFjZDJiNyIsImVtYWlsIjoic3R1ZGVudF9kMWM5YTlAdmVyaXRhcy5lZHUubmciLCJpbnN0aXR1dGlvbl9pZCI6Imluc3RfdmVyaXRhcyIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzg5OTE2ODEzLCJleHAiOjE3ODk5MTc3MTMsImlzcyI6Inp1cmktdXNlci1zZXJ2aWNlIn0.ZISet--6QI8W_CnJZgNbnPom1B17FfE7wP5N-6IJvCwlALfeb5JmSI0ON_jwnFAEAQnTjQdDF8XUkgLBNkDlIDvz_h1coQnQD_iNvDPvC_20Yg_SzWbun-6rzZvWZfSSYMjk2tS8Ue8tMjUMwsies8DPaqjjIujF1lhcDWbWSkqX9RMJnyNxCvZjEAMcFW0FkviL4-gAabCAgbDvu6sZ7hV2BcNw8VKMzqQf2CB-HnsXtk7kxXsUPsNt0Rid7BWKXzxh78sgwo26PrN47pcvGUp8v0Z5ClGmQ3hsFY4wCqGhIUOUzmLJFMAJXOD7iMg9S8AggOnPkItQH_tx-IfurA",
+    "refresh_token": "rft_24012b16cb724c24aabc2da501e04074",
     "token_type": "Bearer",
     "expires_in": 900,
     "user": {
-      "id": "usr_test_5db8020a",
+      "id": "usr_test_291cd2b7",
       "role": "student",
       "institution_id": "inst_veritas"
     }
@@ -170,7 +170,7 @@ curl -X POST "http://localhost:8080/api/v1/auth/login" \
 #### Equivalent cURL Request
 ```bash
 curl -X GET "http://localhost:8080/api/v1/users/me" \
-  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfdGVzdF81ZGI4MDIwYSIsImVtYWlsIjoic3R1ZGVudF85ODI2N2FAdmVyaXRhcy5lZHUubmciLCJpbnN0aXR1dGlvbl9pZCI6Imluc3RfdmVyaXRhcyIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzg5ODkyNTg0LCJleHAiOjE3ODk4OTM0ODQsImlzcyI6Inp1cmktdXNlci1zZXJ2aWNlIn0.CQdYFp8VHHasdL2ETw3cARJrrroXD1_4ADPS7PsL5OPFQCoFbJgg2nRch99lC7E_K90-imJei8_V6YlrRHmdrxujvZte4bpGBaFqN79AR6lufVUc-sUCMCR2WDt4dOR7oU1Ea1ItSPhSbWIBb0gXr--UhRolud7msSGcOFfK02N4dUzkFoA4wxL8Eulz0a7bGoBDaOB6Cm_roriOiN8zWxXdRmQahT5WB7WlFqUUiQ3SawOOMkbzTxTQDtk1kS_J0Q8fPxjzBDOB5K03NL8WNDoVUNZDv_Ex75rqbZTqcGX-QJnQ5TeneaBuEu_cRfUZS8dCAJP5sAVr-MaUKRp1Ug"
+  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfdGVzdF8yOTFjZDJiNyIsImVtYWlsIjoic3R1ZGVudF9kMWM5YTlAdmVyaXRhcy5lZHUubmciLCJpbnN0aXR1dGlvbl9pZCI6Imluc3RfdmVyaXRhcyIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzg5OTE2ODEzLCJleHAiOjE3ODk5MTc3MTMsImlzcyI6Inp1cmktdXNlci1zZXJ2aWNlIn0.ZISet--6QI8W_CnJZgNbnPom1B17FfE7wP5N-6IJvCwlALfeb5JmSI0ON_jwnFAEAQnTjQdDF8XUkgLBNkDlIDvz_h1coQnQD_iNvDPvC_20Yg_SzWbun-6rzZvWZfSSYMjk2tS8Ue8tMjUMwsies8DPaqjjIujF1lhcDWbWSkqX9RMJnyNxCvZjEAMcFW0FkviL4-gAabCAgbDvu6sZ7hV2BcNw8VKMzqQf2CB-HnsXtk7kxXsUPsNt0Rid7BWKXzxh78sgwo26PrN47pcvGUp8v0Z5ClGmQ3hsFY4wCqGhIUOUzmLJFMAJXOD7iMg9S8AggOnPkItQH_tx-IfurA"
 ```
 
 #### Payload Package Sent
@@ -183,8 +183,8 @@ curl -X GET "http://localhost:8080/api/v1/users/me" \
 {
   "status": "success",
   "data": {
-    "id": "usr_test_5db8020a",
-    "email": "student_98267a@veritas.edu.ng",
+    "id": "usr_test_291cd2b7",
+    "email": "student_d1c9a9@veritas.edu.ng",
     "first_name": "Emeka",
     "last_name": "Adeleke",
     "role": "student",

@@ -88,6 +88,9 @@ test(
 # ═════════════════════════════════════════════════════════════════════════════
 print("\n[TEST 2] Evaluation Tool & Grading Intelligence")
 
+from ai_service.storage.database import init_db
+init_db()
+
 from ai_service.tools.evaluation_tool import EvaluationTool
 from ai_service.contracts.context import AIRequestContext, PrincipalContext, UserRole
 

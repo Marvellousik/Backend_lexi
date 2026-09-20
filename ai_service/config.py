@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
     
     # Defaults
-    default_model: str = os.getenv("DEFAULT_MODEL", "gemini-2.5-flash-lite")
+    default_model: str = os.getenv("DEFAULT_MODEL", "openrouter/auto")
 
     class Config:
         env_file = ".env"
