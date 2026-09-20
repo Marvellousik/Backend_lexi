@@ -14,6 +14,9 @@ from academic_service.services.document_intelligence_service import DocumentInte
 from academic_service.services.adaptive_practice_service import AdaptivePracticeService
 from academic_service.services.research_platform_service import ResearchPlatformService
 from academic_service.services.knowledge_graph_service import KnowledgeGraphService, ConceptDAG
+from academic_service.services.admin_service import AdminService
+from academic_service.services.cost_intelligence_service import CostIntelligenceService
+from academic_service.services.pilot_readiness_service import PilotReadinessService
 
 __all__ = [
     "AcademicService",
@@ -33,6 +36,9 @@ __all__ = [
     "ResearchPlatformService",
     "KnowledgeGraphService",
     "ConceptDAG",
+    "AdminService",
+    "CostIntelligenceService",
+    "PilotReadinessService",
 ]
 
 

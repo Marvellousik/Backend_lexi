@@ -461,5 +461,48 @@ class LectureIngestionResponse(BaseModel):
     status: str
 
 
+class AuditLogCreate(BaseModel):
+    institution_id: str
+    actor_id: str
+    action: str
+    resource_type: str
+    resource_id: str
+    payload: Optional[Dict[str, Any]] = None
+    ip_address: Optional[str] = None
+
+
+class AuditLogDTO(BaseModel):
+    id: str
+    institution_id: str
+    actor_id: str
+    action: str
+    resource_type: str
+    resource_id: str
+    payload: Optional[Dict[str, Any]] = None
+    ip_address: Optional[str] = None
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class SISImportCreate(BaseModel):
+    institution_id: str
+    import_type: str = Field(..., description="'students', 'courses', 'schedules', 'enrollments'")
+    records: List[Dict[str, Any]] = []
+
+
+class SISImportDTO(BaseModel):
+    id: str
+    institution_id: str
+    import_type: str
+    status: str
+    total_records: int
+    processed_records: int
+    errors: Optional[List[Dict[str, Any]]] = None
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
 
 

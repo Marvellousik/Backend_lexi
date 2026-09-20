@@ -456,4 +456,44 @@ class Semester(Base):
         self.academic_session = value
 
 
+class AuditLog(Base):
+    """Institutional administration audit log record."""
+    __tablename__ = "audit_logs"
+    __table_args__ = (
+        Index("idx_audit_logs_inst", "institution_id", "created_at"),
+        Index("idx_audit_logs_actor", "actor_id"),
+        Index("idx_audit_logs_action", "action"),
+        {"schema": "academic"},
+    )
+
+    id = Column(String, primary_key=True)
+    institution_id = Column(String, nullable=False, index=True)
+    actor_id = Column(String, nullable=False, index=True)
+    action = Column(String, nullable=False, index=True)
+    resource_type = Column(String, nullable=False)
+    resource_id = Column(String, nullable=False)
+    payload = Column(JSON, nullable=True)
+    ip_address = Column(String, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class SISImport(Base):
+    """Student Information System (SIS) bulk import record."""
+    __tablename__ = "sis_imports"
+    __table_args__ = (
+        Index("idx_sis_imports_inst", "institution_id", "created_at"),
+        Index("idx_sis_imports_status", "status"),
+        {"schema": "academic"},
+    )
+
+    id = Column(String, primary_key=True)
+    institution_id = Column(String, nullable=False, index=True)
+    import_type = Column(String, nullable=False)  # "students", "courses", "schedules", "enrollments"
+    status = Column(String, nullable=False, default="pending")  # "pending", "processing", "completed", "failed"
+    total_records = Column(Integer, default=0)
+    processed_records = Column(Integer, default=0)
+    errors = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 
